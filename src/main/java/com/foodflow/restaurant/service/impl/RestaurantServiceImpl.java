@@ -1,0 +1,103 @@
+package com.foodflow.restaurant.service.impl;
+
+import com.foodflow.common.exceptions.ResourceNotFoundException;
+import com.foodflow.filestorage.service.FileStorageService;
+import com.foodflow.restaurant.dto.RestaurantDetailResponseDto;
+import com.foodflow.restaurant.dto.RestaurantListResponseDto;
+import com.foodflow.restaurant.dto.RestaurantRequestDto;
+import com.foodflow.restaurant.entity.Restaurant;
+import com.foodflow.restaurant.repository.RestaurantRepository;
+import com.foodflow.restaurant.service.RestaurantService;
+import com.foodflow.user.entity.User;
+import com.foodflow.user.service.UserQueryService;
+import com.foodflow.user.service.UserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class RestaurantServiceImpl implements RestaurantService {
+
+    private final UserQueryService userQueryService;
+
+    private final RestaurantRepository restaurantRepository;
+
+    private final ModelMapper modelMapper;
+
+    private final FileStorageService fileStorageService;
+
+    @Override
+    @CacheEvict(
+        value = {
+            "allRestaurants",
+            "restaurantByCity"
+        },
+        allEntries = true
+    )
+    public RestaurantDetailResponseDto createRestaurant(RestaurantRequestDto request, MultipartFile image) {
+
+        User owner = userQueryService.getUserById(request.getOwner())
+                .orElseThrow(() -> new ResourceNotFoundException("Owner not found with id "+request.getOwner()));
+
+        String url = fileStorageService.upload(image, "restaurant");
+        Restaurant restaurant = Restaurant.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .owner(owner)
+                .rating(0f)
+                .address(request.getAddress())
+                .city(request.getCity())
+                .state(request.getState())
+                .zipcode(request.getZipcode())
+                .isOpen(true)
+                .imageUrl(url)
+                .build();
+
+        Restaurant savedRestaurant = restaurantRepository.save(restaurant);
+
+        return modelMapper.map(savedRestaurant, RestaurantDetailResponseDto.class);
+    }
+
+    @Override
+    @Cacheable(value = "allRestaurants", sync = true)
+    public List<RestaurantListResponseDto> getAllRestaurants() {
+        List<Restaurant> restaurants = restaurantRepository.findAll();
+        return restaurants.stream().map(r -> modelMapper.map(r, RestaurantListResponseDto.class)).collect(Collectors.toList());
+    }
+
+    @Override
+    @Cacheable(value = "restaurantByCity", key = "#city", sync = true)
+    public List<RestaurantListResponseDto> getAllRestaurantsByCity(String city) {
+        List<Restaurant> restaurants = restaurantRepository.findByCity(city);
+        return restaurants.stream().filter(Restaurant::getIsOpen).map(r -> modelMapper.map(r, RestaurantListResponseDto.class)).collect(Collectors.toList());
+    }
+
+    @Override
+    @Cacheable(value = "restaurant", key = "#id", unless = "#result == null")
+    public RestaurantDetailResponseDto getRestaurantById(Long id) {
+        Restaurant restaurant = restaurantRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id "+ id));
+
+        User owner = restaurant.getOwner();
+        RestaurantDetailResponseDto restaurantDetailResponse = modelMapper.map(restaurant, RestaurantDetailResponseDto.class);
+
+        if(!ObjectUtils.isEmpty(owner))
+            restaurantDetailResponse.setOwnerId(owner.getId());
+
+        return restaurantDetailResponse;
+    }
+
+    @Override
+    public void deleteRestaurant(Long id) {
+        // TODO
+    }
+}

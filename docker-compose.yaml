@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: foodflow-postgres
+    image: postgres:14
+    environment:
+      POSTGRES_USER: foodflow
+      POSTGRES_PASSWORD: foodflow
+      POSTGRES_DB: foodflow
+      TZ: Asia/Kolkata
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: foodflow-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  app:
+    image: kamleshyadav875/foodflow:1.0.3
+    container_name: foodflow-app
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=Asia/Kolkata"
+      DB_URL: jdbc:postgresql://postgres:5432/foodflow
+      DB_USERNAME: foodflow
+      DB_PASSWORD: foodflow
+      STORAGE_LOCATION: /uploads
+    volumes:
+      - uploads:/uploads
+    restart: unless-stopped
+
+volumes:
+  uploads:
+  postgres:
