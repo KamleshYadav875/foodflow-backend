@@ -74,7 +74,7 @@ public class MenuItemServiceImpl implements MenuItemService {
     @Cacheable("allMenuItems")
     public List<MenuItemResponseDto> getAllMenuItems() {
         List<MenuItems> menuItems = menuItemRepository.findAll();
-        return menuItems.stream().map(item -> modelMapper.map(item, MenuItemResponseDto.class)).collect(Collectors.toList());
+        return menuItems.stream().map(item -> modelMapper.map(item, MenuItemResponseDto.class)).toList();
 
     }
 
@@ -96,12 +96,11 @@ public class MenuItemServiceImpl implements MenuItemService {
                                 .build())
                         .toList();
 
-        RestaurantMenuResponseDto responseDto = RestaurantMenuResponseDto.builder()
+        return RestaurantMenuResponseDto.builder()
                 .categories(categories)
                 .restaurant(modelMapper.map(restaurant, RestaurantSummaryDto.class))
                 .build();
 
-        return responseDto;
     }
 
     @Override

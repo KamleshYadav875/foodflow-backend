@@ -1,6 +1,5 @@
 package com.foodflow.user.service.impl;
 
-import com.foodflow.user.dto.UserResponse;
 import com.foodflow.user.entity.User;
 import com.foodflow.user.repository.UserRepository;
 import com.foodflow.user.service.UserQueryService;

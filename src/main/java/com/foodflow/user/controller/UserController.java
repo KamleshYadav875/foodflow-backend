@@ -3,7 +3,6 @@ package com.foodflow.user.controller;
 import com.foodflow.user.dto.UserCreateRequest;
 import com.foodflow.user.dto.UserResponse;
 import com.foodflow.user.service.UserService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

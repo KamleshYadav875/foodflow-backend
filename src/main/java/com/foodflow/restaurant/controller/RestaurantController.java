@@ -4,7 +4,6 @@ import com.foodflow.restaurant.dto.RestaurantDetailResponseDto;
 import com.foodflow.restaurant.dto.RestaurantListResponseDto;
 import com.foodflow.restaurant.dto.RestaurantRequestDto;
 import com.foodflow.restaurant.service.RestaurantService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

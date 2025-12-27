@@ -1,9 +1,7 @@
 package com.foodflow.user.dto;
 
 import com.foodflow.user.enums.UserRole;
-import com.foodflow.user.enums.UserStatus;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
 
 @Getter

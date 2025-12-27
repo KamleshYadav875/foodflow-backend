@@ -10,7 +10,6 @@ import com.foodflow.restaurant.repository.RestaurantRepository;
 import com.foodflow.restaurant.service.RestaurantService;
 import com.foodflow.user.entity.User;
 import com.foodflow.user.service.UserQueryService;
-import com.foodflow.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -21,7 +20,6 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -69,17 +67,32 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
-    @Cacheable(value = "allRestaurants", sync = true)
+//    @Cacheable(value = "allRestaurants", sync = true)
     public List<RestaurantListResponseDto> getAllRestaurants() {
-        List<Restaurant> restaurants = restaurantRepository.findAll();
-        return restaurants.stream().map(r -> modelMapper.map(r, RestaurantListResponseDto.class)).collect(Collectors.toList());
+        List<Restaurant> restaurants = restaurantRepository.findAllWithOwner();
+
+        return restaurants.stream().map(
+                r -> {
+                    RestaurantListResponseDto dto = new RestaurantListResponseDto();
+                    dto.setId(r.getId());
+                    dto.setName(r.getName());
+                    dto.setDescription(r.getDescription());
+                    dto.setIsOpen(r.getIsOpen());
+                    dto.setRating(r.getRating());
+                    dto.setImageUrl(r.getImageUrl());
+
+                    if(r.getOwner() != null)
+                        dto.setOwnerName(r.getOwner().getName());
+                    return dto;
+                }
+        ).toList();
     }
 
     @Override
     @Cacheable(value = "restaurantByCity", key = "#city", sync = true)
     public List<RestaurantListResponseDto> getAllRestaurantsByCity(String city) {
         List<Restaurant> restaurants = restaurantRepository.findByCity(city);
-        return restaurants.stream().filter(Restaurant::getIsOpen).map(r -> modelMapper.map(r, RestaurantListResponseDto.class)).collect(Collectors.toList());
+        return restaurants.stream().filter(Restaurant::getIsOpen).map(r -> modelMapper.map(r, RestaurantListResponseDto.class)).toList();
     }
 
     @Override

@@ -11,4 +11,6 @@ public class RestaurantListResponseDto {
     private Boolean isOpen;
     private Float rating;
     private String imageUrl;
+    private String ownerName;
+
 }

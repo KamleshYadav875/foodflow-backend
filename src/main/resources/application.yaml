@@ -31,6 +31,10 @@ app:
   storage:
     location: ${STORAGE_LOCATION:uploads}
 
+order:
+  auto-cancel:
+    created-minutes: 2
+
 
 
 
