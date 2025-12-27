@@ -3,6 +3,7 @@ package com.foodflow.order.service.impl;
 import com.foodflow.common.exceptions.BadRequestException;
 import com.foodflow.common.exceptions.ResourceNotFoundException;
 import com.foodflow.order.dto.OrderResponseDto;
+import com.foodflow.order.dto.PageResponse;
 import com.foodflow.order.entity.Cart;
 import com.foodflow.order.entity.CartItem;
 import com.foodflow.order.entity.Order;
@@ -14,9 +15,15 @@ import com.foodflow.order.repository.OrderItemRepository;
 import com.foodflow.order.repository.OrderRepository;
 import com.foodflow.order.service.OrderService;
 import com.foodflow.order.util.OrderStatusValidator;
+import com.foodflow.restaurant.entity.Restaurant;
+import com.foodflow.restaurant.service.RestaurantQueryService;
 import com.foodflow.user.entity.User;
 import com.foodflow.user.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +39,7 @@ public class OrderServiceImpl implements OrderService {
     private final CartItemRepository cartItemRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final RestaurantQueryService restaurantQueryService;
 
     @Override
     @Transactional
@@ -107,5 +115,71 @@ public class OrderServiceImpl implements OrderService {
                 .totalItems(update.getTotalItems())
                 .createdAt(update.getCreatedAt())
                 .build();
+    }
+
+    @Override
+    public PageResponse<OrderResponseDto> getOrdersByUser(Long userId, int page, int size) {
+
+        User user = userQueryService.getUserById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Pageable pageable = PageRequest.of(page,size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Order> ordersPage =
+                orderRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+
+        List<OrderResponseDto> content =
+                ordersPage.getContent()
+                        .stream()
+                        .map(order -> OrderResponseDto.builder()
+                                .orderId(order.getId())
+                                .status(order.getStatus())
+                                .totalItems(order.getTotalItems())
+                                .totalAmount(order.getTotalAmount())
+                                .createdAt(order.getCreatedAt())
+                                .build()
+                        )
+                        .toList();
+
+        return PageResponse.<OrderResponseDto>builder()
+                .content(content)
+                .page(ordersPage.getNumber())
+                .size(ordersPage.getSize())
+                .totalElements(ordersPage.getTotalElements())
+                .totalPages(ordersPage.getTotalPages())
+                .last(ordersPage.isLast())
+                .build();
+    }
+
+    @Override
+    public PageResponse<OrderResponseDto> getOrderByRestaurant(Long restaurantId, int page, int size) {
+        Restaurant restaurant = restaurantQueryService.getRestaurantById(restaurantId)
+                .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Page<Order> orderPage = orderRepository.findByRestaurantOrderByCreatedAtDesc(restaurant, pageable);
+
+        List<OrderResponseDto> response = orderPage.getContent().stream()
+                .map(order -> OrderResponseDto.builder()
+                        .orderId(order.getId())
+                        .totalAmount(order.getTotalAmount())
+                        .totalItems(order.getTotalItems())
+                        .createdAt(order.getCreatedAt())
+                        .status(order.getStatus())
+                        .build()).toList();
+
+        return PageResponse.<OrderResponseDto>builder()
+                .content(response)
+                .page(orderPage.getNumber())
+                .size(orderPage.getSize())
+                .totalElements(orderPage.getTotalElements())
+                .last(orderPage.isLast())
+                .totalPages(orderPage.getTotalPages())
+                .build();
+
     }
 }

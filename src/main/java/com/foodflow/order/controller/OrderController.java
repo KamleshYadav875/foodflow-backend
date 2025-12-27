@@ -1,12 +1,14 @@
 package com.foodflow.order.controller;
 
 import com.foodflow.order.dto.OrderResponseDto;
+import com.foodflow.order.dto.PageResponse;
 import com.foodflow.order.dto.UpdateOrderStatusRequest;
 import com.foodflow.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +25,23 @@ public class OrderController {
                 orderService.checkout(userId),
                 HttpStatus.CREATED
         );
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<PageResponse<OrderResponseDto>> getUserOrders(@PathVariable Long userId, @RequestParam(defaultValue = "0") int page,
+                                                                        @RequestParam(defaultValue = "1") int size){
+        return ResponseEntity.ok(
+                orderService.getOrdersByUser(userId, page, size)
+        );
+    }
+
+    @GetMapping("/restaurant/{restaurantId}")
+    public ResponseEntity<PageResponse<OrderResponseDto>> getRestaurantOrders(
+            @PathVariable Long restaurantId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+            ){
+        return ResponseEntity.ok(orderService.getOrderByRestaurant(restaurantId, page,size));
     }
 
     @PutMapping("/{orderId}/status")
