@@ -37,8 +37,8 @@ order:
 
 razorpay:
   api:
-    key:
-    secret:
+    key: rzp_test_RwwUTt67cvGRVF
+    secret: eUtUFSOxTDGBVnfKhuaRSmjg
 
 
 

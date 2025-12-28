@@ -141,6 +141,60 @@ Cached APIs include:
 
 **Type:** Modular Monolith (Microservice-ready)
 
+┌────────────────────┐
+│   Client Apps      │
+│ (Web / Mobile /    │
+│  Postman / Curl)   │
+└─────────┬──────────┘
+│ REST APIs
+▼
+┌────────────────────────────────────────────┐
+│           Spring Boot Application            │
+│        (Single Deployable Unit)              │
+│                                             │
+│  ┌───────────┐   ┌────────────┐             │
+│  │ User      │   │ Restaurant │             │
+│  │ Module    │   │ Module     │             │
+│  └───────────┘   └────────────┘             │
+│                                             │
+│  ┌───────────┐   ┌────────────┐             │
+│  │ Menu      │   │ Cart       │             │
+│  │ Module    │   │ Module     │             │
+│  └───────────┘   └────────────┘             │
+│                                             │
+│  ┌───────────┐   ┌────────────┐             │
+│  │ Order     │   │ Delivery   │             │
+│  │ Module    │   │ Module     │             │
+│  └───────────┘   └────────────┘             │
+│                                             │
+│  ┌────────────────────────────┐             │
+│  │ Payment Module (Razorpay)  │◄──────────┐ │
+│  └────────────────────────────┘           │ │
+│                   ▲ Webhook                │ │
+└───────────────────┼────────────────────────┘ │
+│                          │
+┌─────────┴─────────┐                │
+│ Razorpay Payment  │────────────────┘
+│ Gateway           │
+└──────────────────┘
+
+
+┌────────────────────────────┐
+│ PostgreSQL Database         │
+│ (Orders, Users, Menu, etc) │
+└────────────────────────────┘
+
+┌────────────────────────────┐
+│ Redis Cache                │
+│ (Read-heavy APIs)          │
+└────────────────────────────┘
+
+┌────────────────────────────┐
+│ File Storage (Docker Vol)  │
+│ (/uploads/** images)       │
+└────────────────────────────┘
+
+
 ```
 com.foodflow
  ├── user
