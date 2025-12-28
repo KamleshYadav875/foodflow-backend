@@ -1,4 +1,4 @@
-<img width="1536" height="1024" alt="Architecture Diagram" src="https://github.com/user-attachments/assets/9231f1f7-861a-4114-801b-ec06ab0da549" /># 🍔 FoodFlow – Online Food Delivery Backend
+# 🍔 FoodFlow – Online Food Delivery Backend
 
 FoodFlow is a **production-grade backend system** for an online food delivery platform (inspired by **Zomato / Swiggy**), built using **Spring Boot**, **Java**, **PostgreSQL**, **Redis**, **Docker**, and **Razorpay**.
 
