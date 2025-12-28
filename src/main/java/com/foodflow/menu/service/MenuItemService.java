@@ -16,8 +16,4 @@ public interface MenuItemService {
     List<MenuItemResponseDto> getAllMenuItems();
 
     RestaurantMenuResponseDto getMenuItemsByRestaurant(Long restaurantId);
-
-    MenuItemResponseDto updateMenuItem(Long id, MenuItemRequestDto request);
-
-    void deleteMenuItem(Long id);
 }

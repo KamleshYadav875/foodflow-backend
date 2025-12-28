@@ -1,166 +1,143 @@
 # 🍔 FoodFlow – Online Food Delivery Backend
 
-FoodFlow is a **scalable backend system** for an online food delivery platform (inspired by Zomato / Swiggy), built using **Spring Boot 4**, **Java 21**, **PostgreSQL**, **Redis**, and **Docker**.
+FoodFlow is a **production-grade backend system** for an online food delivery platform (inspired by **Zomato / Swiggy**), built using **Spring Boot**, **Java**, **PostgreSQL**, **Redis**, **Docker**, and **Razorpay**.
 
-The project is designed as a **modular monolith**, following clean architecture and best practices, with a clear and safe path to microservices in the future.
-
----
-
-## 🚀 Features Implemented
+The project is intentionally designed as a **modular monolith** with clean separation of concerns, strong domain boundaries, and scalability in mind — making it easy to evolve into microservices later.
 
 ---
 
-## 👤 User Module
+## 🚀 Core Features Implemented
 
-* Create user
-* Fetch user by ID
-* Phone number validation (Indian format)
-* Custom business exceptions
-* Query service abstraction (no repository leakage)
+### 👤 User Module
+
+* User registration with phone validation (Indian format)
+* User profile with order statistics
+* View own orders (paginated)
+* Cancel order (rule-based)
+* Clean separation using **Command / Query services**
 
 ---
 
-## 🏪 Restaurant Module
+### 🏪 Restaurant Module
 
-* Create restaurant (with image upload)
+* Create restaurant (multipart image upload)
 * Get restaurant by ID
-* Get restaurants by city
 * Get all restaurants
-* Redis caching for read-heavy APIs
-* DB indexing for:
-
-    * City
-    * City + open status
-    * City + rating
+* Get restaurants by city
+* Optimized queries with DB indexes
+* Owner information mapping (DTO-based)
 
 ---
 
-## 🍽 Menu Module
+### 🍽 Menu Module
 
-* Create menu item (with image upload)
+* Create menu items (with image upload)
 * Get menu item by ID
 * Get all menu items
 * Get menu items by restaurant
-* Menu items grouped by **category**
-* Redis caching with proper eviction strategy
-* Optimized composite indexes:
-
-    * `restaurant_id`
-    * `category`
-    * `restaurant_id + category`
+* Menu grouped by **category**
+* Availability checks before adding to cart
 
 ---
 
-## 🛒 Cart Module
+### 🛒 Cart Module
 
 * Add item to cart
-* Update cart item quantity
+* Update item quantity
 * Remove item from cart
-* Get cart by user
 * Clear cart
 * Enforces **single-restaurant cart rule**
-* Accurate total price & quantity calculation
-* Clean separation of Cart & CartItem entities
+* Auto recalculation of totals
+* Transaction-safe updates
 
 ---
 
-## 📦 Order Module
-
-### Order Flow
-
-```
-User → Cart → Checkout → Order
-```
-
-### Features
+### 📦 Order Module
 
 * Checkout from cart
-* Order creation with snapshot of menu items
-* List user orders with pagination
-* Update order status (controlled lifecycle)
-* Cancel order (rule-based)
-* Order status validation using state machine
-* Prevents illegal transitions
-* Clean DTO responses (no entity exposure)
+* Order item snapshot creation
+* Paginated order listing:
+
+  * User orders
+  * Restaurant orders
+* Order detail view (items + restaurant)
+* Order lifecycle management
+* Auto-cancel unpaid orders (scheduler)
 
 ---
 
-## 🔁 Order Lifecycle
+### 🚚 Delivery Module
 
-```
-CREATED
-  ├── ACCEPTED
-  │     ├── PREPARING
-  │     │     ├── OUT_FOR_DELIVERY
-  │     │     │     └── DELIVERED
-  │     │
-  │     └── CANCELLED
-  │
-  └── CANCELLED
-```
+* Register as delivery partner
+* Partner profile with stats
+* Availability management
+* Order broadcast strategy (city-based)
+* Accept delivery assignment
+* Current delivery tracking
+* Delivery history
+* Delivery status updates:
 
-* Lifecycle enforced via `OrderStatusValidator`
-* Actor-based transitions (USER / RESTAURANT / SYSTEM)
+  * PICKED_UP
+  * DELIVERED
+* Automatic partner availability updates
 
----
-
-## ⏱ Auto-Cancel Scheduler
-
-* Background scheduler cancels stale orders
-* Automatically cancels orders stuck in `CREATED`
-* Runs periodically using Spring Scheduler
-* System-initiated cancellation (safe & isolated)
-* Prevents order buildup and stale data
+> Designed using **Strategy Pattern** for future enhancements (distance-based, load-based assignment).
 
 ---
 
-## 🖼 File Storage
+### 💳 Payment Module (Razorpay)
+
+* Payment created after checkout
+* Razorpay **Hosted Payment Link**
+* Webhook-based payment confirmation
+* Payment lifecycle:
+
+  * PENDING → SUCCESS
+* Order status updated **only after successful payment**
+* Fully backend-driven (minimal frontend dependency)
+
+---
+
+### 🖼 File Storage
 
 * Local filesystem storage
 * Docker-volume compatible
-* Static image access via `/uploads/**`
-* Same behavior in local & Docker environments
+* Static access via:
 
-```
-/uploads/restaurant/*
-/uploads/menuitem/*
-```
-
----
-
-## ⚡ Caching (Redis)
-
-* Cache applied at **service layer**
-* TTL-based caching
-* Explicit cache eviction on write operations
-* JSON serialization using Jackson
-* Prevents redundant DB hits on hot APIs
-
-### Cached APIs
-
-| API                     | Cache Name         |
-| ----------------------- | ------------------ |
-| Get all restaurants     | `allRestaurants`   |
-| Get restaurants by city | `restaurantByCity` |
-| Get restaurant by ID    | `restaurant`       |
-| Get menu item by ID     | `menuItem`         |
-| Get all menu items      | `allMenuItems`     |
-| Get menu by restaurant  | `menuByRestaurant` |
+  ```
+  /uploads/restaurant/**
+  /uploads/menuitem/**
+  ```
 
 ---
 
-## 🧱 Cross-Cutting Concerns
+### ⚡ Caching (Redis)
+
+* Service-layer caching (best practice)
+* TTL-based cache strategy
+* Cache eviction on writes
+* Redis used for **read-heavy APIs**
+
+Cached APIs include:
+
+* Restaurants
+* Menu items
+* Restaurant menus
+
+---
+
+### 🧱 Cross-Cutting Concerns
 
 * Global exception handling (`@RestControllerAdvice`)
+* Custom domain exceptions
 * Centralized CORS configuration
-* DTO-based API contracts
-* Modular package structure
-* Query services to avoid tight coupling
-* Transaction-safe write operations
+* DTO-based API responses (no entity leakage)
+* Transaction management
+* Clean modular package structure
 
 ---
 
-## 🏗 Architecture
+## 🏗 Architecture Overview
 
 **Type:** Modular Monolith (Microservice-ready)
 
@@ -171,9 +148,8 @@ com.foodflow
  ├── menu
  ├── cart
  ├── order
- │    ├── scheduler
- │    ├── validator
- │    └── enums
+ ├── delivery
+ ├── payment
  ├── filestorage
  ├── common
  │    ├── exceptions
@@ -181,49 +157,62 @@ com.foodflow
  └── config
 ```
 
-### Key Design Decisions
+### Key Design Principles
 
 * No repository sharing across modules
-* Communication via services + DTOs
-* Redis used only for read-heavy paths
-* DB indexes driven by real query patterns
-* Cache invalidation handled explicitly
-* Order lifecycle enforced at domain level
+* Command vs Query service separation
+* Domain-driven structure
+* Explicit transaction boundaries
+* Backend-first flow (frontend optional)
 
 ---
 
 ## 🧑‍💻 Tech Stack
 
-| Layer        | Technology                  |
-| ------------ | --------------------------- |
-| Language     | Java 21                     |
-| Framework    | Spring Boot 4               |
-| Database     | PostgreSQL                  |
-| Cache        | Redis                       |
-| ORM          | Spring Data JPA (Hibernate) |
-| Build Tool   | Maven                       |
-| Containers   | Docker & Docker Compose     |
-| File Storage | Local FS (volume-mounted)   |
+| Layer            | Technology                  |
+| ---------------- | --------------------------- |
+| Language         | Java                        |
+| Framework        | Spring Boot                 |
+| ORM              | Spring Data JPA (Hibernate) |
+| Database         | PostgreSQL                  |
+| Cache            | Redis                       |
+| Payments         | Razorpay                    |
+| Build Tool       | Maven                       |
+| Containerization | Docker & Docker Compose     |
+| File Storage     | Local FS (Volume Mounted)   |
 
 ---
 
-## 📦 Running the Project
+## ⚙ Configuration (application.yml)
+
+Key configurations:
+
+* PostgreSQL datasource
+* Redis cache
+* Multipart uploads
+* File storage location
+* Razorpay credentials
+* Auto-cancel order scheduler
+
+---
+
+## ▶ Running the Project
 
 ### 🔹 Prerequisites
 
-* Java 21
+* Java
 * Maven
 * Docker & Docker Compose
 
 ---
 
-### ▶️ Run Locally (Without Docker)
+### ▶ Run Locally
 
 ```bash
 mvn clean spring-boot:run
 ```
 
-Application starts at:
+Server runs at:
 
 ```
 http://localhost:8080
@@ -231,7 +220,7 @@ http://localhost:8080
 
 ---
 
-### 🐳 Run with Docker (Recommended)
+### 🐳 Run with Docker
 
 ```bash
 docker compose up -d
@@ -245,47 +234,50 @@ Services started:
 
 ---
 
-## 🔐 CORS Configuration
+## 🔐 Authentication (Current)
 
-Allowed origins:
+* Header-based user identification:
 
-* `http://localhost:1234`
-* `http://localhost:3000`
+  ```
+  X-USER-ID: <userId>
+  ```
 
-Supports:
-
-* Credentials
-* Preflight requests
-* Easy JWT integration later
+> JWT authentication is planned as a future enhancement.
 
 ---
 
-## ⚠ Exception Handling
+## 🔔 Payment Flow (Razorpay)
 
-Centralized error handling with consistent API responses.
+1. User checks out → Order created
+2. Payment record created (PENDING)
+3. Razorpay payment link generated
+4. User completes payment
+5. Razorpay calls webhook
+6. Backend verifies & updates:
 
-Example:
-
-```json
-{
-  "timestamp": "2025-01-01T10:30:00",
-  "status": 404,
-  "error": "Not Found",
-  "message": "Order not found with id 10",
-  "path": "/api/orders/10"
-}
-```
+  * Payment → SUCCESS
+  * Order → PLACED
 
 ---
 
-## 🔜 What’s Coming Next
+## 🧠 Notable Design Decisions
 
-* 💳 Payment & Refund flow
-* 🔐 JWT Authentication & Authorization
-* 📜 Order timeline / audit log
-* 🚚 Delivery partner lifecycle
-* 📡 Event-driven order updates (Kafka)
-* ☁️ Cloud storage (S3 compatible)
+* Orders are immutable snapshots
+* Payment success drives order placement
+* Delivery assignment is asynchronous & decoupled
+* No tight coupling between modules
+* Easily extensible to microservices
+
+---
+
+## 🔜 Future Enhancements
+
+* Payment failure handling
+* Refund flow
+* JWT Authentication & Authorization
+* Real-time notifications (Kafka / WebSocket)
+* Distance-based delivery assignment
+* Cloud file storage (S3-compatible)
 
 ---
 
@@ -298,8 +290,12 @@ Backend Engineer | Java | Spring Boot | Distributed Systems
 
 ## ⭐ Final Note
 
-This project focuses on **backend correctness, scalability, and clean architecture**.
+This project focuses on **real-world backend engineering**:
+
+* Correctness over shortcuts
+* Architecture over hacks
+* Scalability over demos
 
 If you’re reviewing this project:
 
-> Look at **design decisions, domain modeling, and lifecycle control**, not just CRUD features.
+> Look at **design choices, boundaries, and flows** — not just endpoints.

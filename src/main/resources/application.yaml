@@ -35,7 +35,6 @@ order:
   auto-cancel:
     created-minutes: 5
 
-
 razorpay:
   api:
     key:

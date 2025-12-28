@@ -37,16 +37,16 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     @CacheEvict(
-        value = {
-            "allRestaurants",
-            "restaurantByCity"
-        },
-        allEntries = true
+            value = {
+                    "allRestaurants",
+                    "restaurantByCity"
+            },
+            allEntries = true
     )
     public RestaurantDetailResponseDto createRestaurant(RestaurantRequestDto request, MultipartFile image) {
 
         User owner = userQueryService.getUserById(request.getOwner())
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found with id "+request.getOwner()));
+                .orElseThrow(() -> new ResourceNotFoundException("Owner not found with id " + request.getOwner()));
 
         String url = fileStorageService.upload(image, "restaurant");
         Restaurant restaurant = Restaurant.builder()
@@ -82,7 +82,7 @@ public class RestaurantServiceImpl implements RestaurantService {
                     dto.setRating(r.getRating());
                     dto.setImageUrl(r.getImageUrl());
 
-                    if(r.getOwner() != null)
+                    if (r.getOwner() != null)
                         dto.setOwnerName(r.getOwner().getName());
                     return dto;
                 }
@@ -104,14 +104,10 @@ public class RestaurantServiceImpl implements RestaurantService {
         User owner = restaurant.getOwner();
         RestaurantDetailResponseDto restaurantDetailResponse = modelMapper.map(restaurant, RestaurantDetailResponseDto.class);
 
-        if(!ObjectUtils.isEmpty(owner))
+        if (!ObjectUtils.isEmpty(owner))
             restaurantDetailResponse.setOwnerId(owner.getId());
 
         return restaurantDetailResponse;
     }
 
-    @Override
-    public void deleteRestaurant(Long id) {
-        // TODO
-    }
 }

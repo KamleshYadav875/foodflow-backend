@@ -17,7 +17,6 @@ public interface RestaurantService {
 
     RestaurantDetailResponseDto getRestaurantById(Long id);
 
-    void deleteRestaurant(Long id);
 
 
 }

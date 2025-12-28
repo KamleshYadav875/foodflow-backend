@@ -32,7 +32,6 @@ public class DeliveryAssignmentServiceImpl implements DeliveryAssignmentService 
             throw new BadRequestException("Order already assigned");
         }
 
-        // 3️⃣ Validate assignment exists
         OrderDeliveryAssignment assignment =
                 assignmentRepository
                         .findByOrderIdAndDeliveryPartnerId(orderId, partnerId)

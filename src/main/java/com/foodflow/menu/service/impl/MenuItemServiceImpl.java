@@ -104,13 +104,4 @@ public class MenuItemServiceImpl implements MenuItemService {
 
     }
 
-    @Override
-    public MenuItemResponseDto updateMenuItem(Long id, MenuItemRequestDto request) {
-        return null;
-    }
-
-    @Override
-    public void deleteMenuItem(Long id) {
-        // TODO
-    }
 }

@@ -17,24 +17,21 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<UserResponse> createUser(@RequestBody UserCreateRequest request){
+    public ResponseEntity<UserResponse> createUser(@RequestBody UserCreateRequest request) {
 
         UserResponse userResponse = userService.createUser(request);
         return new ResponseEntity<>(userResponse, HttpStatus.CREATED);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserProfileResponseDto> getMyProfile(@RequestHeader("X-USER-ID") Long userId){
+    public ResponseEntity<UserProfileResponseDto> getMyProfile(@RequestHeader("X-USER-ID") Long userId) {
         UserProfileResponseDto userProfileResponseDto = userService.getMyProfile(userId);
         return ResponseEntity.ok(userProfileResponseDto);
     }
 
     @PutMapping("/orders/{orderId}/cancel")
-    public ResponseEntity<Void> cancelOrder(@RequestHeader("X-USER-ID") Long userId, @PathVariable Long orderId){
+    public ResponseEntity<Void> cancelOrder(@RequestHeader("X-USER-ID") Long userId, @PathVariable Long orderId) {
         userService.cancelOrder(userId, orderId);
         return ResponseEntity.noContent().build();
     }
-
-
-
 }
