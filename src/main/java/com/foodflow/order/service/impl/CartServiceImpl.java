@@ -1,6 +1,7 @@
 package com.foodflow.order.service.impl;
 
 import com.foodflow.common.exceptions.ResourceNotFoundException;
+import com.foodflow.common.util.Constant;
 import com.foodflow.menu.entity.MenuItems;
 import com.foodflow.menu.service.MenuItemQueryService;
 import com.foodflow.order.dto.AddToCartRequest;
@@ -40,11 +41,11 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartResponseDto addItem(AddToCartRequest request) {
         User user = userQueryService.getUserById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
 
         Restaurant restaurant = restaurantQueryService
                 .getRestaurantById(request.getRestaurantId())
-                .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.RESTAURANT_NOT_FOUND));
 
         MenuItems menuItem = menuItemQueryService
                 .getMenuItemById(request.getMenuItemId())
@@ -72,7 +73,7 @@ public class CartServiceImpl implements CartService {
             );
         }
 
-        if(!menuItem.getIsAvailable())
+        if(Boolean.FALSE.equals(menuItem.getIsAvailable()))
             throw new BadRequestException("Menu item is not available");
 
         CartItem cartItem = cartItemRepository
@@ -127,7 +128,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartResponseDto getCartByUser(Long userId) {
         User user  = userQueryService.getUserById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
         Cart cart = cartRepository.findByUser(user);
 
         if (cart == null) {
@@ -192,7 +193,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public void clearCart(Long userId) {
         User user = userQueryService.getUserById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
         Cart cart = cartRepository.findByUser(user);
         cartItemRepository.deleteByCart(cart);
         cartRepository.delete(cart);

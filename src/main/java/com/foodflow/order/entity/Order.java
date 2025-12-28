@@ -1,5 +1,6 @@
 package com.foodflow.order.entity;
 
+import com.foodflow.delivery.entity.DeliveryPartner;
 import com.foodflow.order.enums.CancelReason;
 import com.foodflow.order.enums.OrderStatus;
 import com.foodflow.restaurant.entity.Restaurant;
@@ -44,6 +45,10 @@ public class Order {
 
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private DeliveryPartner deliveryPartner; 
+
 
     @CreationTimestamp
     private LocalDateTime createdAt;

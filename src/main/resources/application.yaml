@@ -33,8 +33,13 @@ app:
 
 order:
   auto-cancel:
-    created-minutes: 2
+    created-minutes: 5
 
+
+razorpay:
+  api:
+    key:
+    secret:
 
 
 

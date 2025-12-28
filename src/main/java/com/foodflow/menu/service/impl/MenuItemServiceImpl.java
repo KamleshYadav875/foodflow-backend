@@ -1,6 +1,7 @@
 package com.foodflow.menu.service.impl;
 
 import com.foodflow.common.exceptions.ResourceNotFoundException;
+import com.foodflow.common.util.Constant;
 import com.foodflow.filestorage.service.FileStorageService;
 import com.foodflow.menu.dto.*;
 import com.foodflow.menu.entity.MenuItems;
@@ -42,7 +43,7 @@ public class MenuItemServiceImpl implements MenuItemService {
             allEntries = true
     )
     public MenuItemResponseDto createMenuItem(MenuItemRequestDto request, MultipartFile image) {
-        Restaurant restaurant = restaurantQueryService.getRestaurantById(request.getRestaurantId()).orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id "+request.getRestaurantId()));
+        Restaurant restaurant = restaurantQueryService.getRestaurantById(request.getRestaurantId()).orElseThrow(() -> new ResourceNotFoundException(Constant.RESTAURANT_NOT_FOUND));
 
         String imageUrl = null;
         if(image != null && !image.isEmpty())
@@ -81,7 +82,7 @@ public class MenuItemServiceImpl implements MenuItemService {
     @Override
     @Cacheable(value = "menuByRestaurant", key = "#restaurantId")
     public RestaurantMenuResponseDto getMenuItemsByRestaurant(Long restaurantId) {
-        Restaurant restaurant = restaurantQueryService.getRestaurantById(restaurantId).orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id "+restaurantId));
+        Restaurant restaurant = restaurantQueryService.getRestaurantById(restaurantId).orElseThrow(() -> new ResourceNotFoundException(Constant.RESTAURANT_NOT_FOUND));
         List<MenuItems> menuItems = menuItemRepository.findByRestaurant(restaurant);
 
         Map<String , List<MenuItemResponseDto>> grouped  =  menuItems.stream()
@@ -110,6 +111,6 @@ public class MenuItemServiceImpl implements MenuItemService {
 
     @Override
     public void deleteMenuItem(Long id) {
-
+        // TODO
     }
 }

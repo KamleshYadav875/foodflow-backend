@@ -2,6 +2,10 @@ package com.foodflow.order.service.impl;
 
 import com.foodflow.common.exceptions.BadRequestException;
 import com.foodflow.common.exceptions.ResourceNotFoundException;
+import com.foodflow.common.util.Constant;
+import com.foodflow.delivery.strategy.impl.CityBasedBroadcastStrategy;
+import com.foodflow.order.dto.OrderDetailResponse;
+import com.foodflow.order.dto.OrderItemResponse;
 import com.foodflow.order.dto.OrderResponseDto;
 import com.foodflow.order.dto.PageResponse;
 import com.foodflow.order.entity.Cart;
@@ -15,11 +19,14 @@ import com.foodflow.order.repository.OrderItemRepository;
 import com.foodflow.order.repository.OrderRepository;
 import com.foodflow.order.service.OrderService;
 import com.foodflow.order.util.OrderStatusValidator;
+import com.foodflow.payment.dto.PaymentLinkResponseDto;
+import com.foodflow.payment.service.PaymentService;
 import com.foodflow.restaurant.entity.Restaurant;
 import com.foodflow.restaurant.service.RestaurantQueryService;
 import com.foodflow.user.entity.User;
 import com.foodflow.user.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +39,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OrderServiceImpl implements OrderService {
 
     private final UserQueryService userQueryService;
@@ -40,12 +48,14 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final RestaurantQueryService restaurantQueryService;
+    private final CityBasedBroadcastStrategy cityBasedBroadcastStrategy;
+    private final PaymentService paymentService;
 
     @Override
     @Transactional
     public OrderResponseDto checkout(Long userId) {
         User user = userQueryService.getUserById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
 
         Cart cart = cartRepository.findByUser(user);
 
@@ -84,19 +94,23 @@ public class OrderServiceImpl implements OrderService {
         cartItemRepository.deleteByCart(cart);
         cartRepository.delete(cart);
 
+        PaymentLinkResponseDto paymentLink = paymentService.createPaymentLink(order.getId());
+
         return OrderResponseDto.builder()
                 .orderId(savedOrder.getId())
                 .totalAmount(savedOrder.getTotalAmount())
                 .status(savedOrder.getStatus())
                 .totalItems(savedOrder.getTotalItems())
                 .createdAt(savedOrder.getCreatedAt())
+                .paymentId(paymentLink.getPaymentId())
+                .paymentLink(paymentLink.getPaymentUrl())
                 .build();
     }
 
     @Override
     public OrderResponseDto updateOrderStatus(Long orderId, OrderStatus status) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
 
         OrderStatus currentStatus = order.getStatus();
 
@@ -107,6 +121,10 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(status);
         Order update = orderRepository.save(order);
+
+        if(update.getStatus().equals(OrderStatus.READY)){
+            cityBasedBroadcastStrategy.broadcast(update);
+        }
 
         return OrderResponseDto.builder()
                 .orderId(update.getId())
@@ -121,7 +139,7 @@ public class OrderServiceImpl implements OrderService {
     public PageResponse<OrderResponseDto> getOrdersByUser(Long userId, int page, int size) {
 
         User user = userQueryService.getUserById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
         Pageable pageable = PageRequest.of(page,size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<Order> ordersPage =
@@ -153,7 +171,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public PageResponse<OrderResponseDto> getOrderByRestaurant(Long restaurantId, int page, int size) {
         Restaurant restaurant = restaurantQueryService.getRestaurantById(restaurantId)
-                .orElseThrow(() -> new ResourceNotFoundException("Restaurant not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.RESTAURANT_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(
                 page,
@@ -181,5 +199,38 @@ public class OrderServiceImpl implements OrderService {
                 .totalPages(orderPage.getTotalPages())
                 .build();
 
+    }
+
+    @Override
+    public OrderDetailResponse getUserOrderDetails(Long userId, Long orderId) {
+       User user = userQueryService.getUserById(userId)
+               .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
+
+       Order order = orderRepository.findById(orderId)
+               .orElseThrow(() -> new ResourceNotFoundException(Constant.ORDER_NOT_FOUND));
+
+       if (!order.getUser().getId().equals(user.getId())) {
+           throw new BadRequestException("You are not allowed to view this order");
+       }
+
+       List<OrderItem> orderItem = orderItemRepository.findByOrder(order);
+
+       List<OrderItemResponse> itemResponseList = orderItem.stream().map(item -> OrderItemResponse.builder()
+               .name(item.getName())
+               .quantity(item.getQuantity())
+               .price(item.getPrice())
+               .totalAmount(item.getTotalAmount())
+               .build()).toList();
+
+       return OrderDetailResponse.builder()
+               .orderId(order.getId())
+               .status(order.getStatus())
+               .orderedAt(order.getCreatedAt())
+               .restaurantName(order.getRestaurant().getName())
+               .partnerId(order.getDeliveryPartner() == null ? null : order.getDeliveryPartner().getId())
+               .partnerName(order.getDeliveryPartner() == null ? null : order.getDeliveryPartner().getUser().getName())
+               .partnerRating(order.getDeliveryPartner() == null ? null : order.getDeliveryPartner().getRating())
+               .items(itemResponseList)
+               .build();
     }
 }

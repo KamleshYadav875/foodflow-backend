@@ -15,4 +15,6 @@ public class OrderResponseDto {
     private BigDecimal totalAmount;
     private Integer totalItems;
     private LocalDateTime createdAt;
+    private String paymentLink;
+    private String paymentId;
 }

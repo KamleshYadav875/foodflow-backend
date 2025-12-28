@@ -29,7 +29,7 @@ public class OrderAutoCancelScheduler {
     public void autoCancelUnacceptedOrders(){
         LocalDateTime expiryTime = LocalDateTime.now().minusMinutes(cancelAfterMinutes);
         List<Order> expiredOrders = orderRepository.findExpiredOrders(
-                        OrderStatus.CREATED,
+                        OrderStatus.PLACED,
                         expiryTime
                 );
 

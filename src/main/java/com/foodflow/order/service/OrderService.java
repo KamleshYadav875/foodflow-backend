@@ -1,5 +1,6 @@
 package com.foodflow.order.service;
 
+import com.foodflow.order.dto.OrderDetailResponse;
 import com.foodflow.order.dto.OrderResponseDto;
 import com.foodflow.order.dto.PageResponse;
 import com.foodflow.order.enums.OrderStatus;
@@ -14,4 +15,6 @@ public interface OrderService {
     PageResponse<OrderResponseDto> getOrdersByUser(Long userId, int page, int size);
 
     PageResponse<OrderResponseDto> getOrderByRestaurant(Long restaurantId, int page, int size);
+
+    OrderDetailResponse getUserOrderDetails(Long userId, Long orderId);
 }

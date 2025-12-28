@@ -1,5 +1,6 @@
 package com.foodflow.order.controller;
 
+import com.foodflow.order.dto.OrderDetailResponse;
 import com.foodflow.order.dto.OrderResponseDto;
 import com.foodflow.order.dto.PageResponse;
 import com.foodflow.order.dto.UpdateOrderStatusRequest;
@@ -27,11 +28,18 @@ public class OrderController {
         );
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<PageResponse<OrderResponseDto>> getUserOrders(@PathVariable Long userId, @RequestParam(defaultValue = "0") int page,
+    @GetMapping("/me")
+    public ResponseEntity<PageResponse<OrderResponseDto>> getUserOrders(@RequestHeader("X-USER-ID") Long userId, @RequestParam(defaultValue = "0") int page,
                                                                         @RequestParam(defaultValue = "1") int size){
         return ResponseEntity.ok(
                 orderService.getOrdersByUser(userId, page, size)
+        );
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderDetailResponse> getOrderDetails(@RequestHeader("X-USER-ID") Long userId, @PathVariable Long orderId){
+        return ResponseEntity.ok(
+                orderService.getUserOrderDetails(userId, orderId)
         );
     }
 
@@ -53,4 +61,5 @@ public class OrderController {
                 )
         );
     }
+
 }

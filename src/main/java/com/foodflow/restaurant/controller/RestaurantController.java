@@ -22,6 +22,7 @@ public class RestaurantController {
 
     private final RestaurantService restaurantService;
 
+    // Create restaurant
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RestaurantDetailResponseDto> createRestaurant(@RequestPart("restaurant") RestaurantRequestDto request, @RequestPart(value = "image", required = false) MultipartFile image){
         RestaurantDetailResponseDto response = restaurantService.createRestaurant(request, image);

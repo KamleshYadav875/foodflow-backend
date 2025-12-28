@@ -2,12 +2,16 @@ package com.foodflow.order.entity;
 
 import com.foodflow.menu.entity.MenuItems;
 import jakarta.persistence.*;
-import lombok.Builder;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Entity
 @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderItem {
 
     @Id

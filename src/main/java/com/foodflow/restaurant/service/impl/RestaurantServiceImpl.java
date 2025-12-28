@@ -1,6 +1,7 @@
 package com.foodflow.restaurant.service.impl;
 
 import com.foodflow.common.exceptions.ResourceNotFoundException;
+import com.foodflow.common.util.Constant;
 import com.foodflow.filestorage.service.FileStorageService;
 import com.foodflow.restaurant.dto.RestaurantDetailResponseDto;
 import com.foodflow.restaurant.dto.RestaurantListResponseDto;
@@ -98,7 +99,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     @Cacheable(value = "restaurant", key = "#id", unless = "#result == null")
     public RestaurantDetailResponseDto getRestaurantById(Long id) {
-        Restaurant restaurant = restaurantRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Restaurant not found with id "+ id));
+        Restaurant restaurant = restaurantRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(Constant.RESTAURANT_NOT_FOUND));
 
         User owner = restaurant.getOwner();
         RestaurantDetailResponseDto restaurantDetailResponse = modelMapper.map(restaurant, RestaurantDetailResponseDto.class);
