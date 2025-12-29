@@ -13,6 +13,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -40,6 +42,8 @@ public class UserServiceImpl implements UserService {
         return UserProfileResponseDto.builder()
                 .name(user.getName())
                 .phone(user.getPhone())
+                .email(user.getEmail())
+                .profileImageUrl(user.getProfileImageUrl())
                 .userId(user.getId())
                 .totalOrders((int) totalOrders)
                 .cancelledOrders((int) cancelledOrders)
@@ -55,5 +59,15 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
 
         orderCommandService.cancelOrder(user.getId(), orderId);
+    }
+
+    @Override
+    public Optional<User> getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public User saveUser(User newUser) {
+        return userRepository.save(newUser);
     }
 }

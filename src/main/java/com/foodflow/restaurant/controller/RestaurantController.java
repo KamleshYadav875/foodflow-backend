@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,6 +30,7 @@ public class RestaurantController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasAnyRole('USER','RESTAURANT')")
     @GetMapping
     public ResponseEntity<List<RestaurantListResponseDto>> getAllRestaurants(){
         List<RestaurantListResponseDto> response = restaurantService.getAllRestaurants();
@@ -36,12 +38,14 @@ public class RestaurantController {
     }
 
     @GetMapping("/city/{city}")
+    @PreAuthorize("hasAnyRole('USER','RESTAURANT')")
     public ResponseEntity<List<RestaurantListResponseDto>> getAllRestaurantsByCity(@PathVariable String city){
         List<RestaurantListResponseDto> response = restaurantService.getAllRestaurantsByCity(city);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','RESTAURANT')")
     public ResponseEntity<RestaurantDetailResponseDto> getRestaurantById(@PathVariable Long id){
         RestaurantDetailResponseDto response = restaurantService.getRestaurantById(id);
         return new ResponseEntity<>(response, HttpStatus.OK);

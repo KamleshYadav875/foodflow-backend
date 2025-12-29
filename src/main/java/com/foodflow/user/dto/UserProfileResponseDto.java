@@ -14,6 +14,8 @@ public class UserProfileResponseDto {
     private Long userId;
     private String name;
     private String phone;
+    private String email;
+    private String profileImageUrl;
 
     private Integer totalOrders;
     private Integer activeOrders;

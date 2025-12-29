@@ -24,6 +24,13 @@ spring:
         port: 6379
         timeout: 60000
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id:
+            client-secret:
 server:
   port: 8080
 
@@ -42,7 +49,15 @@ razorpay:
 
 jwt:
   secret:
-  expiration:
+  expiration: 86400000
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+
 
 
 
