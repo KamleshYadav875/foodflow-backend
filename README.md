@@ -1,108 +1,149 @@
 # 🍔 FoodFlow – Online Food Delivery Backend
 
-FoodFlow is a **production-grade backend system** for an online food delivery platform (inspired by **Zomato / Swiggy**), built using **Spring Boot**, **Java**, **PostgreSQL**, **Redis**, **Docker**, and **Razorpay**.
+FoodFlow is a **production-grade backend system** for an online food delivery platform inspired by **Swiggy / Zomato**, built using **Spring Boot**, **Java**, **PostgreSQL**, **Redis**, **JWT**, **OAuth2**, **Docker**, and **Razorpay**.
 
-The project is intentionally designed as a **modular monolith** with clean separation of concerns, strong domain boundaries, and scalability in mind — making it easy to evolve into microservices later.
-
----
-
-## 🚀 Core Features Implemented
-
-### 👤 User Module
-
-* User registration with phone validation (Indian format)
-* User profile with order statistics
-* View own orders (paginated)
-* Cancel order (rule-based)
-* Clean separation using **Command / Query services**
+The project is intentionally designed as a **modular monolith** with strong domain boundaries, clean separation of concerns, and real-world workflows — making it **microservice-ready** without premature complexity.
 
 ---
 
-### 🏪 Restaurant Module
-
-* Create restaurant (multipart image upload)
-* Get restaurant by ID
-* Get all restaurants
-* Get restaurants by city
-* Optimized queries with DB indexes
-* Owner information mapping (DTO-based)
+## 🚀 Features Overview
 
 ---
 
-### 🍽 Menu Module
+## 🔐 Authentication & Security
 
-* Create menu items (with image upload)
-* Get menu item by ID
-* Get all menu items
-* Get menu items by restaurant
-* Menu grouped by **category**
-* Availability checks before adding to cart
+### Authentication
+- JWT-based authentication (stateless)
+- Phone + password login
+- Google OAuth2 login
+- Secure password hashing using BCrypt
 
----
+### Authorization
+- Role-based access control using `@PreAuthorize`
+- Roles:
+  - `USER`
+  - `RESTAURANT`
+  - `DELIVERY`
+- Method-level security enabled
 
-### 🛒 Cart Module
-
-* Add item to cart
-* Update item quantity
-* Remove item from cart
-* Clear cart
-* Enforces **single-restaurant cart rule**
-* Auto recalculation of totals
-* Transaction-safe updates
-
----
-
-### 📦 Order Module
-
-* Checkout from cart
-* Order item snapshot creation
-* Paginated order listing:
-
-  * User orders
-  * Restaurant orders
-* Order detail view (items + restaurant)
-* Order lifecycle management
-* Auto-cancel unpaid orders (scheduler)
+### Security Highlights
+- Custom JWT authentication filter
+- OAuth2 success handler with auto user provisioning
+- Stateless session management
+- Centralized `SecurityConfig`
 
 ---
 
-### 🚚 Delivery Module
+## 👤 User Module
 
-* Register as delivery partner
-* Partner profile with stats
-* Availability management
-* Order broadcast strategy (city-based)
-* Accept delivery assignment
-* Current delivery tracking
-* Delivery history
-* Delivery status updates:
-
-  * PICKED_UP
-  * DELIVERED
-* Automatic partner availability updates
-
-> Designed using **Strategy Pattern** for future enhancements (distance-based, load-based assignment).
+- User registration with **Indian phone number validation**
+- Login with JWT
+- User profile with:
+  - Total orders
+  - Active orders
+  - Cancelled orders
+- View own orders (paginated)
+- Cancel own orders (rule-based)
+- Clean separation of **Command** and **Query** services
 
 ---
 
-### 💳 Payment Module (Razorpay)
+## 🏪 Restaurant Module
 
-* Payment created after checkout
-* Razorpay **Hosted Payment Link**
-* Webhook-based payment confirmation
-* Payment lifecycle:
-
-  * PENDING → SUCCESS
-* Order status updated **only after successful payment**
-* Fully backend-driven (minimal frontend dependency)
+- Restaurant onboarding with multipart image upload
+- Automatic **restaurant admin creation**
+- Get restaurant by ID
+- Get all restaurants
+- Get restaurants by city
+- Redis caching for read-heavy APIs
+- Optimized queries using DB indexes
+- DTO-based responses (no entity leakage)
 
 ---
 
-### 🖼 File Storage
+## 🍽 Menu Module
 
-* Local filesystem storage
-* Docker-volume compatible
-* Static access via:
+- Create menu items (multipart image upload)
+- Get menu item by ID
+- Get all menu items
+- Get menu items by restaurant
+- Menu grouping by **category**
+- Availability validation
+- Cache eviction on write operations
+
+---
+
+## 🛒 Cart Module
+
+- Add item to cart
+- Update item quantity
+- Remove item
+- Clear cart
+- Enforces **single-restaurant cart rule**
+- Automatic total & quantity recalculation
+- Fully transactional and concurrency-safe
+
+---
+
+## 📦 Order Module
+
+- Checkout from cart
+- Immutable order snapshot creation
+- Order lifecycle management:
+  - CREATED
+  - PLACED
+  - ACCEPTED
+  - PREPARING
+  - READY
+  - OUT_FOR_PICKUP
+  - PICKED_UP
+  - DELIVERED
+  - CANCELLED / REJECTED
+- User order listing (paginated)
+- Restaurant order listing (paginated)
+- Order detail view
+- Auto-cancel unpaid orders (scheduler-based)
+
+---
+
+## 🚚 Delivery Module
+
+- Register as delivery partner
+- Delivery partner profile with statistics
+- Availability management:
+  - ONLINE
+  - OFFLINE
+  - BUSY
+- City-based order broadcast strategy
+- Delivery assignment workflow:
+  - PENDING → ACCEPTED → COMPLETED
+- Current delivery tracking
+- Delivery history
+- Automatic partner availability updates
+
+> Delivery assignment is designed using the **Strategy Pattern** for future enhancements  
+> (distance-based, load-based, etc.).
+
+---
+
+## 💳 Payment Module (Razorpay)
+
+- Payment created after checkout
+- Razorpay hosted payment link generation
+- Secure webhook handling
+- Payment lifecycle:
+  - PENDING → SUCCESS
+- Order status updated **only after payment success**
+- Fully backend-driven payment flow
+
+---
+
+## 🖼 File Storage
+
+- Local filesystem storage
+- Docker-volume compatible
+- Static resource access via Spring MVC
+
 
   ```
   /uploads/restaurant/**
@@ -118,22 +159,23 @@ The project is intentionally designed as a **modular monolith** with clean separ
 * Cache eviction on writes
 * Redis used for **read-heavy APIs**
 
-Cached APIs include:
-
-* Restaurants
-* Menu items
-* Restaurant menus
+Cached data includes:
+- Restaurants
+- Restaurants by city
+- Menu items
+- Restaurant menus
 
 ---
 
 ### 🧱 Cross-Cutting Concerns
 
-* Global exception handling (`@RestControllerAdvice`)
-* Custom domain exceptions
-* Centralized CORS configuration
-* DTO-based API responses (no entity leakage)
-* Transaction management
-* Clean modular package structure
+- Global exception handling (`@RestControllerAdvice`)
+- Centralized API error response model
+- Custom domain exceptions
+- Centralized CORS configuration
+- DTO mapping using ModelMapper
+- Scheduler support
+- Clean modular package structure
 
 ---
 
@@ -146,6 +188,7 @@ Cached APIs include:
 
 ```
 com.foodflow
+ ├── auth
  ├── user
  ├── restaurant
  ├── menu
@@ -154,6 +197,7 @@ com.foodflow
  ├── delivery
  ├── payment
  ├── filestorage
+ ├── security
  ├── common
  │    ├── exceptions
  │    └── dto
@@ -173,9 +217,10 @@ com.foodflow
 ## 🧑‍💻 Tech Stack
 
 | Layer            | Technology                  |
-| ---------------- | --------------------------- |
+|------------------|-----------------------------|
 | Language         | Java                        |
 | Framework        | Spring Boot                 |
+| Security         | Spring, JWT, OAuth2         |
 | ORM              | Spring Data JPA (Hibernate) |
 | Database         | PostgreSQL                  |
 | Cache            | Redis                       |
@@ -192,10 +237,13 @@ Key configurations:
 
 * PostgreSQL datasource
 * Redis cache
-* Multipart uploads
+* Multipart upload limits
 * File storage location
 * Razorpay credentials
-* Auto-cancel order scheduler
+* OAuth2 client configuration
+* JWT secret & expiration
+* Scheduler settings
+* Actuator metrics
 
 ---
 
@@ -237,18 +285,6 @@ Services started:
 
 ---
 
-## 🔐 Authentication (Current)
-
-* Header-based user identification:
-
-  ```
-  X-USER-ID: <userId>
-  ```
-
-> JWT authentication is planned as a future enhancement.
-
----
-
 ## 🔔 Payment Flow (Razorpay)
 
 1. User checks out → Order created
@@ -275,12 +311,13 @@ Services started:
 
 ## 🔜 Future Enhancements
 
-* Payment failure handling
-* Refund flow
-* JWT Authentication & Authorization
-* Real-time notifications (Kafka / WebSocket)
+* OTP-based authentication
+* Payment failure & refund handling
+* Kafka-based async events
+* Real-time notifications
 * Distance-based delivery assignment
 * Cloud file storage (S3-compatible)
+* Kubernetes deployment
 
 ---
 
