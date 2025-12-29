@@ -5,9 +5,11 @@ import com.foodflow.order.dto.OrderResponseDto;
 import com.foodflow.order.dto.PageResponse;
 import com.foodflow.order.dto.UpdateOrderStatusRequest;
 import com.foodflow.order.service.OrderService;
+import com.foodflow.security.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -18,31 +20,36 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping("/checkout/{userId}")
-    public ResponseEntity<OrderResponseDto> checkout(
-            @PathVariable Long userId) {
-
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/checkout")
+    public ResponseEntity<OrderResponseDto> checkout() {
+        Long userId = SecurityUtils.getCurrentUserId();
         return new ResponseEntity<>(
                 orderService.checkout(userId),
                 HttpStatus.CREATED
         );
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/me")
-    public ResponseEntity<PageResponse<OrderResponseDto>> getUserOrders(@RequestHeader("X-USER-ID") Long userId, @RequestParam(defaultValue = "0") int page,
+    public ResponseEntity<PageResponse<OrderResponseDto>> getUserOrders(@RequestParam(defaultValue = "0") int page,
                                                                         @RequestParam(defaultValue = "1") int size){
+        Long userId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(
                 orderService.getOrdersByUser(userId, page, size)
         );
     }
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{orderId}")
-    public ResponseEntity<OrderDetailResponse> getOrderDetails(@RequestHeader("X-USER-ID") Long userId, @PathVariable Long orderId){
+    public ResponseEntity<OrderDetailResponse> getOrderDetails(@PathVariable Long orderId){
+        Long userId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(
                 orderService.getUserOrderDetails(userId, orderId)
         );
     }
 
+    @PreAuthorize("hasRole('RESTAURANT')")
     @GetMapping("/restaurant/{restaurantId}")
     public ResponseEntity<PageResponse<OrderResponseDto>> getRestaurantOrders(
             @PathVariable Long restaurantId,
@@ -52,6 +59,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderByRestaurant(restaurantId, page,size));
     }
 
+    @PreAuthorize("hasRole('RESTAURANT')")
     @PutMapping("/{orderId}/status")
     public ResponseEntity<OrderResponseDto> updateOrderStatus(@PathVariable Long orderId, @RequestBody UpdateOrderStatusRequest request){
         return ResponseEntity.ok(

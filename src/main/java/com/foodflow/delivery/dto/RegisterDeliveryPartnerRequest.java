@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 public class RegisterDeliveryPartnerRequest {
-    private Long userId;
     private String city;
     private VehicleType vehicleType;
 }

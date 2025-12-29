@@ -3,8 +3,10 @@ package com.foodflow.delivery.controller;
 import com.foodflow.delivery.service.DeliveryAssignmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+@PreAuthorize("hasRole('DELIVERY')")
 @RestController
 @RequestMapping("/api/delivery/orders")
 @RequiredArgsConstructor

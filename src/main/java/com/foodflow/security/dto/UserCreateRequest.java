@@ -1,6 +1,5 @@
-package com.foodflow.user.dto;
+package com.foodflow.security.dto;
 
-import com.foodflow.user.enums.UserRole;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
@@ -17,5 +16,5 @@ public class UserCreateRequest {
             message = "Phone number must be a valid 10-digit Indian number"
     )
     private String phone;
-    private UserRole role;
+    private String password;
 }

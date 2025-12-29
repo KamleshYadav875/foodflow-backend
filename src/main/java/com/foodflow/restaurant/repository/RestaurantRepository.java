@@ -1,6 +1,7 @@
 package com.foodflow.restaurant.repository;
 
 import com.foodflow.restaurant.entity.Restaurant;
+import com.foodflow.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -15,4 +16,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             SELECT r FROM Restaurant r 
             JOIN FETCH r.owner""")
     List<Restaurant> findAllWithOwner();
+
+
+    boolean existsByOwner(User owner);
 }

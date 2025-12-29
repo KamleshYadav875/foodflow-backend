@@ -1,12 +1,12 @@
 package com.foodflow.user.controller;
 
-import com.foodflow.user.dto.UserCreateRequest;
+import com.foodflow.security.util.SecurityUtils;
 import com.foodflow.user.dto.UserProfileResponseDto;
-import com.foodflow.user.dto.UserResponse;
 import com.foodflow.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,21 +16,19 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping
-    public ResponseEntity<UserResponse> createUser(@RequestBody UserCreateRequest request) {
 
-        UserResponse userResponse = userService.createUser(request);
-        return new ResponseEntity<>(userResponse, HttpStatus.CREATED);
-    }
-
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/me")
-    public ResponseEntity<UserProfileResponseDto> getMyProfile(@RequestHeader("X-USER-ID") Long userId) {
+    public ResponseEntity<UserProfileResponseDto> getMyProfile() {
+        Long userId = SecurityUtils.getCurrentUserId();
         UserProfileResponseDto userProfileResponseDto = userService.getMyProfile(userId);
         return ResponseEntity.ok(userProfileResponseDto);
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PutMapping("/orders/{orderId}/cancel")
-    public ResponseEntity<Void> cancelOrder(@RequestHeader("X-USER-ID") Long userId, @PathVariable Long orderId) {
+    public ResponseEntity<Void> cancelOrder(@PathVariable Long orderId) {
+        Long userId = SecurityUtils.getCurrentUserId();
         userService.cancelOrder(userId, orderId);
         return ResponseEntity.noContent().build();
     }

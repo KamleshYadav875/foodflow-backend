@@ -14,6 +14,7 @@ import com.foodflow.order.repository.CartRepository;
 import com.foodflow.order.service.CartService;
 import com.foodflow.restaurant.entity.Restaurant;
 import com.foodflow.restaurant.service.RestaurantQueryService;
+import com.foodflow.security.util.SecurityUtils;
 import com.foodflow.user.entity.User;
 import com.foodflow.user.service.UserQueryService;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +41,8 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public CartResponseDto addItem(AddToCartRequest request) {
-        User user = userQueryService.getUserById(request.getUserId())
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userQueryService.getUserById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
 
         Restaurant restaurant = restaurantQueryService

@@ -1,5 +1,6 @@
 package com.foodflow.restaurant.service.impl;
 
+import com.foodflow.common.exceptions.BadRequestException;
 import com.foodflow.common.exceptions.ResourceNotFoundException;
 import com.foodflow.common.util.Constant;
 import com.foodflow.filestorage.service.FileStorageService;
@@ -10,13 +11,14 @@ import com.foodflow.restaurant.entity.Restaurant;
 import com.foodflow.restaurant.repository.RestaurantRepository;
 import com.foodflow.restaurant.service.RestaurantService;
 import com.foodflow.user.entity.User;
-import com.foodflow.user.service.UserQueryService;
+import com.foodflow.user.service.impl.UserCommandService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,9 +29,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RestaurantServiceImpl implements RestaurantService {
 
-    private final UserQueryService userQueryService;
-
     private final RestaurantRepository restaurantRepository;
+
+    private final UserCommandService userCommandService;
 
     private final ModelMapper modelMapper;
 
@@ -43,11 +45,15 @@ public class RestaurantServiceImpl implements RestaurantService {
             },
             allEntries = true
     )
+    @Transactional
     public RestaurantDetailResponseDto createRestaurant(RestaurantRequestDto request, MultipartFile image) {
 
-        User owner = userQueryService.getUserById(request.getOwner())
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found with id " + request.getOwner()));
 
+        User owner = userCommandService.onboardRestaurantAdmin(request.getPhone(), request.getName());
+
+        if(restaurantRepository.existsByOwner(owner)){
+            throw new BadRequestException("Restaurant is already registered with same phone");
+        }
         String url = fileStorageService.upload(image, "restaurant");
         Restaurant restaurant = Restaurant.builder()
                 .name(request.getName())

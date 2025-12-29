@@ -17,6 +17,7 @@ import com.foodflow.order.service.OrderCommandService;
 import com.foodflow.order.service.OrderPartnerQueryService;
 import com.foodflow.order.service.OrderService;
 import com.foodflow.order.service.OrderStatsQueryService;
+import com.foodflow.security.util.SecurityUtils;
 import com.foodflow.user.entity.User;
 import com.foodflow.user.enums.UserRole;
 import com.foodflow.user.service.UserQueryService;
@@ -37,7 +38,8 @@ public class DeliveryPartnerServiceImpl implements DeliveryPartnerService {
 
     @Override
     public DeliveryPartnerResponseDto register(RegisterDeliveryPartnerRequest request) {
-        User user = userQueryService.getUserById(request.getUserId())
+        Long userId = SecurityUtils.getCurrentUserId();
+        User user = userQueryService.getUserById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
 
         if(deliveryPartnerRepository.existsByUser(user))
@@ -45,7 +47,7 @@ public class DeliveryPartnerServiceImpl implements DeliveryPartnerService {
             throw new BadRequestException("User is already registered as delivery partner");
         }
 
-        user.setRole(UserRole.DELIVERY);
+        user.getRoles().add(UserRole.DELIVERY);
 
         DeliveryPartner deliveryPartner = DeliveryPartner.builder()
                 .user(user)

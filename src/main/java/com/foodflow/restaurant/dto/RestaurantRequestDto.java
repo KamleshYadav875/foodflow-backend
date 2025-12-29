@@ -12,11 +12,9 @@ import lombok.Setter;
 public class RestaurantRequestDto {
     private String name;
     private String description;
-    private Long owner;
+    private String phone;
     private String address;
     private String city;
     private String state;
     private String zipcode;
-    private Boolean isOpen;
-    private Float rating;
 }

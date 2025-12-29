@@ -1,19 +1,16 @@
 package com.foodflow.user.service.impl;
 
-import com.foodflow.common.exceptions.BadRequestException;
 import com.foodflow.common.exceptions.ResourceNotFoundException;
 import com.foodflow.common.util.Constant;
 import com.foodflow.order.service.OrderCommandService;
 import com.foodflow.order.service.OrderStatsQueryService;
-import com.foodflow.user.dto.UserCreateRequest;
 import com.foodflow.user.dto.UserProfileResponseDto;
-import com.foodflow.user.dto.UserResponse;
 import com.foodflow.user.entity.User;
-import com.foodflow.user.enums.UserStatus;
 import com.foodflow.user.repository.UserRepository;
 import com.foodflow.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,34 +19,14 @@ public class UserServiceImpl implements UserService {
 
     private final ModelMapper modelMapper;
 
+    private final PasswordEncoder passwordEncoder;
+
     private final UserRepository userRepository;
 
     private final OrderStatsQueryService orderStatsQueryService;
 
     private final OrderCommandService orderCommandService;
 
-    @Override
-    public UserResponse createUser(UserCreateRequest request) {
-
-        if (request.getPhone() == null || request.getPhone().trim().isEmpty()) {
-            throw new BadRequestException("Phone number should not be blank");
-        }
-
-        if (!request.getPhone().matches("^[6-9]\\d{9}$")) {
-            throw new BadRequestException("Phone number must be a valid 10-digit Indian number");
-        }
-
-        User user = User.builder()
-                .phone(request.getPhone())
-                .name(request.getName())
-                .role(request.getRole())
-                .status(UserStatus.ACTIVE)
-                .build();
-
-        User savedUser = userRepository.save(user);
-        return modelMapper.map(savedUser, UserResponse.class);
-
-    }
 
     @Override
     public UserProfileResponseDto getMyProfile(Long userId) {
@@ -68,6 +45,7 @@ public class UserServiceImpl implements UserService {
                 .cancelledOrders((int) cancelledOrders)
                 .activeOrders((int) activeOrders)
                 .joinedAt(user.getCreatedAt())
+                .roles(user.getRoles())
                 .build();
     }
 
