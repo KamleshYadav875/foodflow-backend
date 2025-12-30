@@ -18,5 +18,7 @@ public interface RestaurantService {
     RestaurantDetailResponseDto getRestaurantById(Long id);
 
 
+    void changeRestaurantState(Long id);
 
+    void updateResturantImage(Long restaurantId, MultipartFile image);
 }

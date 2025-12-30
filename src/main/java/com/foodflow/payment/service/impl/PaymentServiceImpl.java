@@ -16,6 +16,7 @@ import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
@@ -69,6 +71,8 @@ public class PaymentServiceImpl implements PaymentService {
 
             PaymentLink link = client.paymentLink.create(request);
             payment.setGatewayOrderId(link.get("id"));
+            payment.setPaymentId(link.get("id"));
+            payment.setPaymentLink(link.get("short_url"));
             paymentRepository.save(payment);
 
             return new PaymentLinkResponseDto(

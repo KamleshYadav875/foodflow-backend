@@ -10,8 +10,10 @@ import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
@@ -42,6 +44,29 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
     }
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiErrorResponse> handleAccessDeniedException(
+            AccessDeniedException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.FORBIDDEN,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorResponse> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
 
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ResponseEntity<ApiErrorResponse> handleAuthorizationDeniedException(
@@ -49,7 +74,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         return buildResponse(
-                HttpStatus.UNAUTHORIZED,
+                HttpStatus.FORBIDDEN,
                 ex.getMessage(),
                 request.getRequestURI()
         );
@@ -91,7 +116,7 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request
     ) {
-        log.info(ex.toString());
+        log.error(String.valueOf(ex));
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Something went wrong. Please try again.",

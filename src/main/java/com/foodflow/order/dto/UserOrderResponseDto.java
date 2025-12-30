@@ -10,14 +10,17 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class OrderResponseDto {
+public class UserOrderResponseDto {
     private Long orderId;
+    private String restaurantName;
+    private Long restaurantId;
     private OrderStatus status;
     private BigDecimal totalAmount;
     private Integer totalItems;
     private LocalDateTime createdAt;
-    private String paymentLink;
-    private String paymentId;
     private LocalDateTime cancelledAt;
     private CancelReason cancelReason;
+    private LocalDateTime deliveredAt;
+    private String deliveryPartnerName;
+    private Long deliveryPartnerId;
 }

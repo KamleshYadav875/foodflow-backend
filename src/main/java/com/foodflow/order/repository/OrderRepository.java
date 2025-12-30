@@ -37,7 +37,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     long countByUser(User user);
 
-    long countByDeliveryPartner(DeliveryPartner partner);
 
     @Query("""
        select count(o)

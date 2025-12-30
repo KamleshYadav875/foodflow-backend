@@ -12,6 +12,10 @@ public class UserResponse {
     private Long id;
     private String name;
     private String phone;
+    private String address;
+    private String city;
+    private String state;
+    private String zipcode;
     private Set<UserRole> roles;
     private String profileImageUrl;
 

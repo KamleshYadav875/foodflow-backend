@@ -4,10 +4,9 @@ import com.foodflow.common.exceptions.BadRequestException;
 import com.foodflow.common.exceptions.ResourceNotFoundException;
 import com.foodflow.common.util.Constant;
 import com.foodflow.delivery.strategy.impl.CityBasedBroadcastStrategy;
-import com.foodflow.order.dto.OrderDetailResponse;
-import com.foodflow.order.dto.OrderItemResponse;
-import com.foodflow.order.dto.OrderResponseDto;
-import com.foodflow.order.dto.PageResponse;
+import com.foodflow.menu.entity.MenuItems;
+import com.foodflow.menu.service.MenuItemQueryService;
+import com.foodflow.order.dto.*;
 import com.foodflow.order.entity.Cart;
 import com.foodflow.order.entity.CartItem;
 import com.foodflow.order.entity.Order;
@@ -50,10 +49,11 @@ public class OrderServiceImpl implements OrderService {
     private final RestaurantQueryService restaurantQueryService;
     private final CityBasedBroadcastStrategy cityBasedBroadcastStrategy;
     private final PaymentService paymentService;
+    private final MenuItemQueryService menuItemQueryService;
 
     @Override
     @Transactional
-    public OrderResponseDto checkout(Long userId) {
+    public OrderCheckoutResponseDto checkout(Long userId) {
         User user = userQueryService.getUserById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
 
@@ -63,9 +63,25 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException("Cart is empty");
         }
 
-        List<CartItem> cartItem = cartItemRepository.findByCart(cart);
-        if(cartItem.isEmpty()){
+        List<CartItem> cartItems = cartItemRepository.findByCart(cart);
+        if(cartItems.isEmpty()){
             throw new BadRequestException("Cart is empty");
+        }
+
+        for (CartItem item : cartItems) {
+            MenuItems menuItem = menuItemQueryService.getMenuItemById(
+                    item.getMenuItems().getId()
+            ).orElseThrow(() -> new BadRequestException("Menu item removed"));
+
+            if (menuItem.getIsAvailable() == false) {
+                throw new BadRequestException("Item no longer available");
+            }
+
+            if (item.getPrice().compareTo(menuItem.getPrice()) != 0) {
+                throw new BadRequestException(
+                        "Price changed for item: " + menuItem.getName()
+                );
+            }
         }
 
         Order order = Order.builder()
@@ -78,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        List<OrderItem> orderItems = cartItem.stream()
+        List<OrderItem> orderItems = cartItems.stream()
                 .map(item ->
                     OrderItem.builder()
                         .order(savedOrder)
@@ -96,7 +112,7 @@ public class OrderServiceImpl implements OrderService {
 
         PaymentLinkResponseDto paymentLink = paymentService.createPaymentLink(order.getId());
 
-        return OrderResponseDto.builder()
+        return OrderCheckoutResponseDto.builder()
                 .orderId(savedOrder.getId())
                 .totalAmount(savedOrder.getTotalAmount())
                 .status(savedOrder.getStatus())
@@ -108,35 +124,34 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponseDto updateOrderStatus(Long orderId, OrderStatus status) {
+    public OrderUpdateResponseDto updateOrderStatus(Long orderId, UpdateOrderStatusRequest request) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
 
         OrderStatus currentStatus = order.getStatus();
 
-        OrderStatusValidator.validateTransition(currentStatus, status);
+        OrderStatusValidator.validateTransition(currentStatus, request.getStatus());
 
-        if(status == OrderStatus.CANCELLED || status == OrderStatus.REJECTED)
+        if(request.getStatus() == OrderStatus.CANCELLED || request.getStatus() == OrderStatus.REJECTED) {
             order.setCancelledAt(LocalDateTime.now());
+            order.setCancelReason(request.getCancelReason());
+        }
 
-        order.setStatus(status);
+        order.setStatus(request.getStatus());
         Order update = orderRepository.save(order);
 
         if(update.getStatus().equals(OrderStatus.READY)){
             cityBasedBroadcastStrategy.broadcast(update);
         }
 
-        return OrderResponseDto.builder()
+        return OrderUpdateResponseDto.builder()
                 .orderId(update.getId())
                 .status(update.getStatus())
-                .totalAmount(update.getTotalAmount())
-                .totalItems(update.getTotalItems())
-                .createdAt(update.getCreatedAt())
                 .build();
     }
 
     @Override
-    public PageResponse<OrderResponseDto> getOrdersByUser(Long userId, int page, int size) {
+    public PageResponse<UserOrderResponseDto> getOrdersByUser(Long userId, int page, int size) {
 
         User user = userQueryService.getUserById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
@@ -145,20 +160,27 @@ public class OrderServiceImpl implements OrderService {
         Page<Order> ordersPage =
                 orderRepository.findByUserOrderByCreatedAtDesc(user, pageable);
 
-        List<OrderResponseDto> content =
+        List<UserOrderResponseDto> content =
                 ordersPage.getContent()
                         .stream()
-                        .map(order -> OrderResponseDto.builder()
+                        .map(order -> UserOrderResponseDto.builder()
                                 .orderId(order.getId())
+                                .restaurantName(order.getRestaurant().getName())
+                                .restaurantId(order.getRestaurant().getId())
                                 .status(order.getStatus())
-                                .totalItems(order.getTotalItems())
                                 .totalAmount(order.getTotalAmount())
+                                .totalItems(order.getTotalItems())
                                 .createdAt(order.getCreatedAt())
+                                .cancelReason(order.getCancelReason())
+                                .cancelledAt(order.getCancelledAt())
+                                .deliveredAt(order.getDeliveredAt())
+                                .deliveryPartnerName(order.getDeliveryPartner() != null ? order.getDeliveryPartner().getUser().getName(): null)
+                                .deliveryPartnerId(order.getDeliveryPartner() != null ? order.getDeliveryPartner().getUser().getId(): null)
                                 .build()
                         )
                         .toList();
 
-        return PageResponse.<OrderResponseDto>builder()
+        return PageResponse.<UserOrderResponseDto>builder()
                 .content(content)
                 .page(ordersPage.getNumber())
                 .size(ordersPage.getSize())

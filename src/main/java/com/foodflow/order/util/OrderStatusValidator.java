@@ -15,7 +15,7 @@ public class OrderStatusValidator {
                                 OrderStatus.PLACED
 
                         ),
-                        OrderStatus.PLACED, Set.of(OrderStatus.ACCEPTED),
+                        OrderStatus.PLACED, Set.of(OrderStatus.ACCEPTED, OrderStatus.CANCELLED),
                         OrderStatus.ACCEPTED, Set.of(OrderStatus.PREPARING),
                         OrderStatus.PREPARING, Set.of(OrderStatus.READY),
                         OrderStatus.READY, Set.of(OrderStatus.OUT_FOR_PICKUP),

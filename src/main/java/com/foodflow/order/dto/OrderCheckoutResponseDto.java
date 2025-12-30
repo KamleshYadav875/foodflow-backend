@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class OrderResponseDto {
+public class OrderCheckoutResponseDto {
     private Long orderId;
     private OrderStatus status;
     private BigDecimal totalAmount;
@@ -18,6 +18,4 @@ public class OrderResponseDto {
     private LocalDateTime createdAt;
     private String paymentLink;
     private String paymentId;
-    private LocalDateTime cancelledAt;
-    private CancelReason cancelReason;
 }

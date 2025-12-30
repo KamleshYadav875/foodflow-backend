@@ -49,9 +49,4 @@ public class OrderStatsQueryServiceImpl implements OrderStatsQueryService {
         return orderRepository.countByDeliveryPartnerActiveOrder(partner.getId());
     }
 
-    @Override
-    public long countByDeliveryPartner(Long partnerId) {
-        DeliveryPartner partner = partnerQueryService.getPartnerById(partnerId);
-        return orderRepository.countByDeliveryPartner(partner);
-    }
 }

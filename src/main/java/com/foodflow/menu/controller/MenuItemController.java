@@ -3,6 +3,7 @@ package com.foodflow.menu.controller;
 import com.foodflow.menu.dto.MenuItemRequestDto;
 import com.foodflow.menu.dto.MenuItemResponseDto;
 import com.foodflow.menu.dto.RestaurantMenuResponseDto;
+import com.foodflow.menu.dto.UpdateMenuItemRequest;
 import com.foodflow.menu.service.MenuItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,20 @@ public class MenuItemController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasRole('RESTAURANT')")
+    @PatchMapping(value = "/{menuItemId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> updateMenuItemImage(@PathVariable Long menuItemId, @RequestPart(value = "image", required = false)MultipartFile image){
+       menuItemService.updateMenuItemImage(menuItemId, image);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('RESTAURANT')")
+    @PutMapping()
+    public ResponseEntity<MenuItemResponseDto> updateMenuItem(@RequestBody UpdateMenuItemRequest request){
+        MenuItemResponseDto response = menuItemService.updateMenuItem(request);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<MenuItemResponseDto> getMenuItemById(@PathVariable Long id){
         MenuItemResponseDto response = menuItemService.getMenuItemById(id);
@@ -45,5 +60,12 @@ public class MenuItemController {
     public ResponseEntity<RestaurantMenuResponseDto> getMenuItemsByRestaurant(@PathVariable Long restaurantId){
         RestaurantMenuResponseDto response = menuItemService.getMenuItemsByRestaurant(restaurantId);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('RESTAURANT')")
+    @PutMapping("/availability/{menuItemId}")
+    public ResponseEntity<Void> updateMenuItemAvailability(@PathVariable Long menuItemId){
+        menuItemService.updateMenuItemAvailability(menuItemId);
+        return ResponseEntity.noContent().build();
     }
 }

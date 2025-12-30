@@ -1,5 +1,6 @@
 package com.foodflow.menu.service.impl;
 
+import com.foodflow.common.exceptions.BadRequestException;
 import com.foodflow.common.exceptions.ResourceNotFoundException;
 import com.foodflow.common.util.Constant;
 import com.foodflow.filestorage.service.FileStorageService;
@@ -9,10 +10,15 @@ import com.foodflow.menu.repository.MenuItemRepository;
 import com.foodflow.menu.service.MenuItemService;
 import com.foodflow.restaurant.entity.Restaurant;
 import com.foodflow.restaurant.service.RestaurantQueryService;
+import com.foodflow.security.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MenuItemServiceImpl implements MenuItemService {
 
     private final RestaurantQueryService restaurantQueryService;
@@ -102,6 +109,79 @@ public class MenuItemServiceImpl implements MenuItemService {
                 .restaurant(modelMapper.map(restaurant, RestaurantSummaryDto.class))
                 .build();
 
+    }
+
+    @Override
+    @Caching( evict = {
+            @CacheEvict(value = "allMenuItems", allEntries = true),
+            @CacheEvict(value = "menuByRestaurant", allEntries = true),
+            @CacheEvict(value = "menuItem", key = "#menuItemId")
+        }
+    )
+    public void updateMenuItemAvailability(Long menuItemId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        MenuItems menuItem = menuItemRepository.findById(menuItemId)
+                .orElseThrow(() -> new ResourceNotFoundException("MenuItem not found"));
+
+        if(!menuItem.getRestaurant().getOwner().getId().equals(userId)){
+            throw new BadRequestException("You are not allowed to perform the action");
+        }
+
+        menuItem.setIsAvailable(!menuItem.getIsAvailable());
+        menuItemRepository.save(menuItem);
+    }
+
+    @Override
+    @Caching(
+            evict = {
+                    @CacheEvict(value = "menuItem", key = "#menuItemId"),
+                    @CacheEvict(value = "menuByRestaurant", allEntries = true),
+                    @CacheEvict(value = "allMenuItems", allEntries = true),
+            }
+    )
+    public void updateMenuItemImage(Long menuItemId, MultipartFile image) {
+
+        if (image == null || image.isEmpty()) {
+            throw new BadRequestException("Image file is required");
+        }
+
+        MenuItems menuItems = menuItemRepository.findById(menuItemId)
+                .orElseThrow(() -> new ResourceNotFoundException("Menuitem not found"));
+
+        Long userId = SecurityUtils.getCurrentUserId();
+        if(!menuItems.getRestaurant().getOwner().getId().equals(userId))
+            throw new AuthorizationDeniedException("Not owner of the restaurant");
+
+        String newImageUrl = fileStorageService.upload(image, "menuitem");
+        menuItems.setImageUrl(newImageUrl);
+
+        menuItemRepository.save(menuItems);
+    }
+
+    @Override
+    @Caching(
+            put = {
+                    @CachePut(value = "menuItem", key = "#request.id")
+            },
+            evict = {
+                    @CacheEvict(value = "menuByRestaurant", allEntries = true),
+                    @CacheEvict(value = "allMenuItems", allEntries = true)
+            }
+    )
+    public MenuItemResponseDto updateMenuItem(UpdateMenuItemRequest request) {
+        MenuItems menuItems = menuItemRepository.findById(request.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("MenuItem not found"));
+
+        menuItems.setName(request.getName());
+        menuItems.setDescription(request.getDescription());
+        menuItems.setCategory(request.getCategory());
+        menuItems.setPrice(request.getPrice());
+        menuItems.setIsAvailable(request.getIsAvailable());
+        menuItems.setIsVeg(request.getIsVeg());
+
+        MenuItems updatedMenuItem = menuItemRepository.save(menuItems);
+        return  modelMapper.map(updatedMenuItem, MenuItemResponseDto.class);
     }
 
 }

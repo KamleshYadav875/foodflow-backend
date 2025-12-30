@@ -11,6 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class RestaurantRequestDto {
     private String name;
+    private String ownerName;
     private String description;
     private String phone;
     private String address;

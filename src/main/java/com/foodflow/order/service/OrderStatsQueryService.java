@@ -8,5 +8,5 @@ public interface OrderStatsQueryService {
     long countActiveOrders(Long userId);
 
     long countByDeliveryPartnerActiveOrder(Long partnerId);
-    long countByDeliveryPartner(Long partnerId);
+
 }

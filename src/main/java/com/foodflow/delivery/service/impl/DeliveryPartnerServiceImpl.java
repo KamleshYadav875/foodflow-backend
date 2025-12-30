@@ -15,7 +15,6 @@ import com.foodflow.order.entity.Order;
 import com.foodflow.order.enums.OrderStatus;
 import com.foodflow.order.service.OrderCommandService;
 import com.foodflow.order.service.OrderPartnerQueryService;
-import com.foodflow.order.service.OrderService;
 import com.foodflow.order.service.OrderStatsQueryService;
 import com.foodflow.security.util.SecurityUtils;
 import com.foodflow.user.entity.User;
@@ -103,7 +102,6 @@ public class DeliveryPartnerServiceImpl implements DeliveryPartnerService {
                 .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_PARTNER));
 
         Long activeOrders = orderStatsQueryService.countByDeliveryPartnerActiveOrder(partner.getId());
-        Long totalOrders = orderStatsQueryService.countByDeliveryPartner(partner.getId());
 
         return PartnerProfileResponseDto.builder()
                 .partnerId(partner.getId())
@@ -112,7 +110,7 @@ public class DeliveryPartnerServiceImpl implements DeliveryPartnerService {
                 .rating(partner.getRating())
                 .city(partner.getCity())
                 .joinedAt(partner.getCreatedAt())
-                .totalDeliveries(totalOrders)
+                .totalDeliveries(Long.valueOf(partner.getTotalDeliveries()))
                 .activeOrders(activeOrders)
                 .availability(partner.getAvailability())
                 .isActive(partner.getIsActive())
@@ -179,6 +177,7 @@ public class DeliveryPartnerServiceImpl implements DeliveryPartnerService {
 
         if(OrderStatus.DELIVERED.equals(status)){
             partner.setAvailability(DeliveryPartnerAvailability.ONLINE);
+            partner.setTotalDeliveries(partner.getTotalDeliveries() + 1);
             deliveryPartnerRepository.save(partner);
         }
     }

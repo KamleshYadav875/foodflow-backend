@@ -1,11 +1,12 @@
 package com.foodflow.order.dto;
 
-import com.foodflow.order.enums.CancelReason;
 import com.foodflow.order.enums.OrderStatus;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
-public class UpdateOrderStatusRequest {
+@Builder
+public class OrderUpdateResponseDto {
+    private Long orderId;
     private OrderStatus status;
-    private CancelReason cancelReason;
 }

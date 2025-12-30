@@ -4,12 +4,14 @@ import com.foodflow.common.exceptions.BadRequestException;
 import com.foodflow.common.exceptions.ResourceNotFoundException;
 import com.foodflow.common.util.Constant;
 import com.foodflow.filestorage.service.FileStorageService;
+import com.foodflow.menu.entity.MenuItems;
 import com.foodflow.restaurant.dto.RestaurantDetailResponseDto;
 import com.foodflow.restaurant.dto.RestaurantListResponseDto;
 import com.foodflow.restaurant.dto.RestaurantRequestDto;
 import com.foodflow.restaurant.entity.Restaurant;
 import com.foodflow.restaurant.repository.RestaurantRepository;
 import com.foodflow.restaurant.service.RestaurantService;
+import com.foodflow.security.util.SecurityUtils;
 import com.foodflow.user.entity.User;
 import com.foodflow.user.service.impl.UserCommandService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
@@ -48,13 +51,12 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Transactional
     public RestaurantDetailResponseDto createRestaurant(RestaurantRequestDto request, MultipartFile image) {
 
-
         User owner = userCommandService.onboardRestaurantAdmin(request.getPhone(), request.getName());
 
         if(restaurantRepository.existsByOwner(owner)){
             throw new BadRequestException("Restaurant is already registered with same phone");
         }
-        String url = fileStorageService.upload(image, "restaurant");
+        String url = image == null ? null : fileStorageService.upload(image, "restaurant");
         Restaurant restaurant = Restaurant.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -105,7 +107,8 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     @Cacheable(value = "restaurant", key = "#id", unless = "#result == null")
     public RestaurantDetailResponseDto getRestaurantById(Long id) {
-        Restaurant restaurant = restaurantRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(Constant.RESTAURANT_NOT_FOUND));
+        Restaurant restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.RESTAURANT_NOT_FOUND));
 
         User owner = restaurant.getOwner();
         RestaurantDetailResponseDto restaurantDetailResponse = modelMapper.map(restaurant, RestaurantDetailResponseDto.class);
@@ -114,6 +117,40 @@ public class RestaurantServiceImpl implements RestaurantService {
             restaurantDetailResponse.setOwnerId(owner.getId());
 
         return restaurantDetailResponse;
+    }
+
+    @Override
+    public void changeRestaurantState(Long restaurantId) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.RESTAURANT_NOT_FOUND));
+
+        if(!restaurant.getOwner().getId().equals(userId)){
+            throw new BadRequestException("You are not authorized to perform the action");
+        }
+        restaurant.setIsOpen(!restaurant.getIsOpen());
+        restaurantRepository.save(restaurant);
+
+    }
+
+    @Override
+    public void updateResturantImage(Long restaurantId, MultipartFile image) {
+
+        if (image == null || image.isEmpty()) {
+            throw new BadRequestException("Image file is required");
+        }
+
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.RESTAURANT_NOT_FOUND));
+
+        Long userId = SecurityUtils.getCurrentUserId();
+        if(!restaurant.getOwner().getId().equals(userId))
+            throw new AuthorizationDeniedException("Not owner of the restaurant");
+
+        String newImageUrl = fileStorageService.upload(image, "restaurant");
+        restaurant.setImageUrl(newImageUrl);
+
+        restaurantRepository.save(restaurant);
     }
 
 }

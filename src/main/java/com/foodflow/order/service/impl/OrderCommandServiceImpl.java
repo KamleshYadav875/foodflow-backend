@@ -5,6 +5,7 @@ import com.foodflow.common.exceptions.ResourceNotFoundException;
 import com.foodflow.common.util.Constant;
 import com.foodflow.delivery.entity.DeliveryPartner;
 import com.foodflow.order.entity.Order;
+import com.foodflow.order.enums.CancelReason;
 import com.foodflow.order.enums.OrderStatus;
 import com.foodflow.order.repository.OrderRepository;
 import com.foodflow.order.service.OrderCommandService;
@@ -12,6 +13,8 @@ import com.foodflow.order.util.OrderStatusValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
     public void assignDeliveryPartner(Order order, DeliveryPartner partner) {
         order.setDeliveryPartner(partner);
         order.setStatus(OrderStatus.OUT_FOR_PICKUP);
+        order.setAssignedAt(LocalDateTime.now());
     }
 
     @Override
@@ -48,11 +52,14 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         );
 
 
-        order.setStatus(
-                status == OrderStatus.PICKED_UP
-                        ? OrderStatus.PICKED_UP
-                        : OrderStatus.DELIVERED
-        );
+        if(status.equals(OrderStatus.DELIVERED)){
+            order.setStatus(OrderStatus.DELIVERED);
+            order.setDeliveredAt(LocalDateTime.now());
+        }
+        else if(status.equals(OrderStatus.PICKED_UP)){
+            order.setStatus(OrderStatus.PICKED_UP);
+            order.setPickedUpAt(LocalDateTime.now());
+        }
 
         orderRepository.save(order);
     }
@@ -69,6 +76,8 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         OrderStatusValidator.validateTransition(order.getStatus(), OrderStatus.CANCELLED);
 
         order.setStatus(OrderStatus.CANCELLED);
+        order.setCancelledAt(LocalDateTime.now());
+        order.setCancelReason(CancelReason.USER_REQUEST);
         orderRepository.save(order);
     }
 

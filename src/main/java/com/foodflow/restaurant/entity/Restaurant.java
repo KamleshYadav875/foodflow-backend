@@ -45,12 +45,7 @@ public class Restaurant {
     @JoinColumn(name = "owner_id")
     private User owner;
 
-    private Double latitude;
-    private Double longitude;
-
     private Boolean isOpen = true;
-
-    private Integer avgPrepTimeMinutes;
 
     private Float rating;
 

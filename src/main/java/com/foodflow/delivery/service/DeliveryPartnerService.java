@@ -7,8 +7,6 @@ import com.foodflow.delivery.dto.PartnerProfileResponseDto;
 import com.foodflow.delivery.dto.RegisterDeliveryPartnerRequest;
 import com.foodflow.delivery.enums.DeliveryPartnerAvailability;
 import com.foodflow.order.enums.OrderStatus;
-import jakarta.validation.Valid;
-import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 

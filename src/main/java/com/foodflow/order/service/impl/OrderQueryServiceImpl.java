@@ -16,7 +16,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
     @Override
     public Order getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException(Constant.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(Constant.ORDER_NOT_FOUND));
         return order;
     }
 }

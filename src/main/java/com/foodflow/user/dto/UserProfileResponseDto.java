@@ -17,6 +17,11 @@ public class UserProfileResponseDto {
     private String email;
     private String profileImageUrl;
 
+    private String address;
+    private String city;
+    private String state;
+    private String zipcode;
+
     private Integer totalOrders;
     private Integer activeOrders;
     private Integer cancelledOrders;

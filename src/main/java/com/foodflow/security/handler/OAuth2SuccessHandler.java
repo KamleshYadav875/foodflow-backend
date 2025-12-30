@@ -1,5 +1,6 @@
 package com.foodflow.security.handler;
 
+import com.foodflow.common.exceptions.BadRequestException;
 import com.foodflow.security.jwt.JwtService;
 import com.foodflow.user.entity.User;
 import com.foodflow.user.enums.UserRole;
@@ -33,6 +34,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken)  authentication;
         DefaultOAuth2User oAuthUser = (DefaultOAuth2User) token.getPrincipal();
         String email = oAuthUser.getAttribute("email");
+        if (email == null) {
+            throw new BadRequestException("Email not available from OAuth provider");
+        }
         User user = userService.getUserByEmail(email).orElse(null);
 
         if(user == null){

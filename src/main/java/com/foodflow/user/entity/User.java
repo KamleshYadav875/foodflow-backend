@@ -50,6 +50,14 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
+    private String address;
+
+    private String city;
+
+    private String state;
+
+    private String zipcode;
+
     private String profileImageUrl;
 
     @CreationTimestamp

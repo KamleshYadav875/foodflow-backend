@@ -47,8 +47,11 @@ public class Order {
     private LocalDateTime cancelledAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private DeliveryPartner deliveryPartner; 
+    private DeliveryPartner deliveryPartner;
 
+    private LocalDateTime assignedAt;
+    private LocalDateTime pickedUpAt;
+    private LocalDateTime deliveredAt;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

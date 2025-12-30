@@ -31,6 +31,9 @@ public class Payment {
 
     private BigDecimal amount;
 
+    private String paymentLink;
+    private String paymentId;
+
     private String gatewayOrderId;
     private String gatewayPaymentId;
     private String gatewaySignature;

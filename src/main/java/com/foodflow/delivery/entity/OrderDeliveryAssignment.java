@@ -26,8 +26,4 @@ public class OrderDeliveryAssignment {
 
     @Enumerated(EnumType.STRING)
     private DeliveryAssignmentStatus status;
-    private LocalDateTime assignedAt;
-    private LocalDateTime pickedUpAt;
-    private LocalDateTime deliveredAt;
-
 }

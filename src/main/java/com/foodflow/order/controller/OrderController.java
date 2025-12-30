@@ -1,9 +1,6 @@
 package com.foodflow.order.controller;
 
-import com.foodflow.order.dto.OrderDetailResponse;
-import com.foodflow.order.dto.OrderResponseDto;
-import com.foodflow.order.dto.PageResponse;
-import com.foodflow.order.dto.UpdateOrderStatusRequest;
+import com.foodflow.order.dto.*;
 import com.foodflow.order.service.OrderService;
 import com.foodflow.security.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +19,7 @@ public class OrderController {
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/checkout")
-    public ResponseEntity<OrderResponseDto> checkout() {
+    public ResponseEntity<OrderCheckoutResponseDto> checkout() {
         Long userId = SecurityUtils.getCurrentUserId();
         return new ResponseEntity<>(
                 orderService.checkout(userId),
@@ -32,7 +29,7 @@ public class OrderController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/me")
-    public ResponseEntity<PageResponse<OrderResponseDto>> getUserOrders(@RequestParam(defaultValue = "0") int page,
+    public ResponseEntity<PageResponse<UserOrderResponseDto>> getUserOrders(@RequestParam(defaultValue = "0") int page,
                                                                         @RequestParam(defaultValue = "1") int size){
         Long userId = SecurityUtils.getCurrentUserId();
         return ResponseEntity.ok(
@@ -61,11 +58,11 @@ public class OrderController {
 
     @PreAuthorize("hasRole('RESTAURANT')")
     @PutMapping("/{orderId}/status")
-    public ResponseEntity<OrderResponseDto> updateOrderStatus(@PathVariable Long orderId, @RequestBody UpdateOrderStatusRequest request){
+    public ResponseEntity<OrderUpdateResponseDto> updateOrderStatus(@PathVariable Long orderId, @RequestBody UpdateOrderStatusRequest request){
         return ResponseEntity.ok(
                 orderService.updateOrderStatus(
                         orderId,
-                        request.getStatus()
+                        request
                 )
         );
     }
