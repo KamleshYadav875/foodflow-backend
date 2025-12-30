@@ -1,0 +1,59 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/foodflow}
+    username: ${DB_USERNAME:foodflow}
+    password: ${DB_PASSWORD:foodflow}
+    driver-class-name: org.postgresql.Driver
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 10MB
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  cache:
+    type: redis
+
+    data:
+      redis:
+        host: localhost
+        port: 6379
+        timeout: 60000
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id:
+            client-secret:
+server:
+  port: 8080
+
+app:
+  storage:
+    location: ${STORAGE_LOCATION:uploads}
+
+order:
+  auto-cancel:
+    created-minutes: 5
+
+razorpay:
+  api:
+    key:
+    secret:
+
+jwt:
+  secret:
+  expiration: 86400000
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
