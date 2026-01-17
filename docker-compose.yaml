@@ -20,25 +20,60 @@ services:
     container_name: foodflow-redis
     ports:
       - "6379:6379"
+
     restart: unless-stopped
 
-  app:
-    image: kamleshyadav875/foodflow:1.0.3
-    container_name: foodflow-app
-    depends_on:
-      - postgres
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      CLUSTER_ID: dFKDuABuQgqev6_N8_MrlA
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: foodflow-zipkin
+    ports:
+      - "9411:9411"
+    restart: unless-stopped
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
     ports:
       - "8080:8080"
-    environment:
-      JAVA_TOOL_OPTIONS: "-Duser.timezone=Asia/Kolkata"
-      DB_URL: jdbc:postgresql://postgres:5432/foodflow
-      DB_USERNAME: foodflow
-      DB_PASSWORD: foodflow
-      STORAGE_LOCATION: /uploads
+      - "50000:50000"
     volumes:
-      - uploads:/uploads
-    restart: unless-stopped
+      - jenkins_home:/var/jenkins_home
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=true
+#  app:
+#    image: kamleshyadav875/foodflow:1.0.3
+#    container_name: foodflow-app
+#    depends_on:
+#      - postgres
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      JAVA_TOOL_OPTIONS: "-Duser.timezone=Asia/Kolkata"
+#      DB_URL: jdbc:postgresql://postgres:5432/foodflow
+#      DB_USERNAME: foodflow
+#      DB_PASSWORD: foodflow
+#      STORAGE_LOCATION: /uploads
+#    volumes:
+#      - uploads:/uploads
+#    restart: unless-stopped
 
 volumes:
   uploads:
   postgres:
+  jenkins_home:

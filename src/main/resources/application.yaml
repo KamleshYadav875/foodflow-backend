@@ -29,8 +29,8 @@ spring:
       client:
         registration:
           google:
-            client-id:
-            client-secret:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
 server:
   port: 8080
 
@@ -44,12 +44,12 @@ order:
 
 razorpay:
   api:
-    key:
-    secret:
+    key: ${RAZORPAY_KEY}
+    secret: ${RAZORPAY_SECRET}
 
 jwt:
-  secret:
-  expiration: 86400000
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
 
 
 management:
